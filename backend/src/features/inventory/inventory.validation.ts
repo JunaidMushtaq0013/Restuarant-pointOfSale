@@ -12,6 +12,8 @@ export const createInventorySchema = z
         message: "Inventory name cannot exceed 100 characters.",
       }),
 
+    itemType: z.enum(["Raw Material", "Ready Item"]),
+
     unit: z.enum(["kg", "g", "l", "ml", "pcs"]),
 
     quantity: z

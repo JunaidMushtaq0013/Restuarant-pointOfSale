@@ -1,13 +1,15 @@
 export interface InventoryType {
   name: string;
-  unit: "kg" | "g" | "l" | "ml" | "pcs";
+
+  itemType: "Raw Material" | "Ready Item";
+
+  unit: string;
 
   quantity: number;
 
   minimumStock: number;
 
   buyingPrice: number;
-
 
   isActive: boolean;
 }

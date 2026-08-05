@@ -9,6 +9,11 @@ const inventorySchema = new Schema<InventoryType>(
       trim: true,
       unique: true,
     },
+    itemType: {
+      type: String,
+      enum: ["Raw Material", "Ready Item"],
+      required: true,
+    },
 
     unit: {
       type: String,
@@ -41,10 +46,7 @@ const inventorySchema = new Schema<InventoryType>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-export const Inventory = model<InventoryType>(
-  "Inventory",
-  inventorySchema
-);
+export const Inventory = model<InventoryType>("Inventory", inventorySchema);

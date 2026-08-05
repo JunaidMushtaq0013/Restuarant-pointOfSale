@@ -13,6 +13,10 @@ export const getAllInventoryService = async() => {
     const inventory = await Inventory.find({isActive: true}).sort({createdAt:-1});
     return inventory;
 };
+
+
+
+
 export const getInventoryByIdService = async(id: string) => {
     const inventory = await Inventory.findById(id);
     return inventory;

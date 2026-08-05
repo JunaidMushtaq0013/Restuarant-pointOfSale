@@ -18,6 +18,8 @@ export const createInventory = async(req: Request, res: Response, next: NextFunc
 };
 
 
+
+
 export const getAllInventory = async(req: Request, res: Response, next: NextFunction) => {
     try{
         const inventory = await getAllInventoryService();
