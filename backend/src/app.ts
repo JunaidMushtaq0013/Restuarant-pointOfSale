@@ -4,6 +4,7 @@ import categoryRoutes from "./features/category/category.routes.js";
 import inventoryRoutes from "./features/inventory/inventory.routes.js";
 import globalErrorHandler from "./middleware/globalErrorHandler.js";
 import menuRoutes from "./features/menu/menu.routes.js";
+import customerRoutes from "./features/customer/customer.routes.js";
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.get("/", (_req, res) => {
 app.use("/api/categories", categoryRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/menu", menuRoutes);
+app.use("/api/customers", customerRoutes);
 
 
 app.use(globalErrorHandler);
