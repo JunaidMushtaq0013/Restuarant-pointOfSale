@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createOrderController, getAllOrdersController, getOrderByIdController, updateOrderStatusController, updatePaymentStatusController } from "./orders.controller.js";
+import { cancelOrderController, createOrderController, getAllOrdersController, getOrderByIdController, updateOrderStatusController, updatePaymentStatusController } from "./orders.controller.js";
 
 
 const router = Router();
@@ -13,5 +13,7 @@ router.get("/:id", getOrderByIdController);
 router.patch("/:id/status", updateOrderStatusController);
 
 router.patch("/:id/payment-status", updatePaymentStatusController);
+
+router.patch("/:id/cancel", cancelOrderController);
 
 export default router;

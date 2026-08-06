@@ -1,5 +1,5 @@
 import {Request, Response, NextFunction} from "express";
-import { createOrderService, getAllOrdersService, getOrderByIdService, updateOrderStatusService, updatePaymentStatusService } from "./orders.service.js";
+import { cancelOrderService, createOrderService, getAllOrdersService, getOrderByIdService, updateOrderStatusService, updatePaymentStatusService } from "./orders.service.js";
 
 export const createOrderController = async (req: Request, res: Response, next: NextFunction) => {
    try{
@@ -98,4 +98,16 @@ export const updatePaymentStatusController = async (
   }
 };
 
+export const cancelOrderController = async (
+  req: Request<{ id: string }>,
+  res: Response
+) => {
+  const order = await cancelOrderService(req.params.id);
+
+  res.status(200).json({
+    status: "success",
+    message: "Order cancelled successfully",
+    data: order,
+  });
+};
 
