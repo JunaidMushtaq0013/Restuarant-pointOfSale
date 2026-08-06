@@ -5,6 +5,7 @@ import inventoryRoutes from "./features/inventory/inventory.routes.js";
 import globalErrorHandler from "./middleware/globalErrorHandler.js";
 import menuRoutes from "./features/menu/menu.routes.js";
 import customerRoutes from "./features/customer/customer.routes.js";
+import orderRoutes from "./features/orders/orders.routes.js";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/customers", customerRoutes);
+app.use("/api/orders", orderRoutes);
 
 
 app.use(globalErrorHandler);

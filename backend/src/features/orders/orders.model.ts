@@ -120,7 +120,7 @@ const orderSchema = new Schema<OrderType>(
 
     status: {
       type: String,
-      enum: ["Pending", "Completed", "Cancelled"],
+      enum: ["Pending", "Preparing", "Ready", "Served", "Cancelled"],
       default: "Pending",
     },
 

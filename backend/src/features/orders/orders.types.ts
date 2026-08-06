@@ -41,7 +41,27 @@ export interface OrderType {
 
     paymentStatus: "Pending" | "Paid";
 
-    status: "Pending" | "Completed" | "Cancelled";
+    status:
+  | "Pending"
+  | "Preparing"
+  | "Ready"
+  | "Served"
+  | "Cancelled";
 
     isActive: boolean;
+}
+
+export interface CreateOrderPayload {
+  customerName?: string;
+
+  customerPhone?: string;
+
+  items: {
+    menu: Types.ObjectId;
+    quantity: number;
+  }[];
+
+  orderType: "Dine In" | "Takeaway";
+
+  discountPercentage?: number;
 }
