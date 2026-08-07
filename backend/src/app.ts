@@ -6,6 +6,9 @@ import globalErrorHandler from "./middleware/globalErrorHandler.js";
 import menuRoutes from "./features/menu/menu.routes.js";
 import customerRoutes from "./features/customer/customer.routes.js";
 import orderRoutes from "./features/orders/orders.routes.js";
+import settingsRoutes from "./features/settings/settings.routes.js";
+import employeeRoutes from "./features/employee/employee.routes.js";
+
 
 const app = express();
 
@@ -27,6 +30,8 @@ app.use("/api/inventory", inventoryRoutes);
 app.use("/api/menu", menuRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/settings",settingsRoutes);
+app.use("/api/employees",employeeRoutes);
 
 
 app.use(globalErrorHandler);

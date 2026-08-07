@@ -1,0 +1,30 @@
+import { Settings } from "./settings.model.js";
+import { SettingsType } from "./settings.types.js";
+
+export const getSettingsService = async () => {
+  let settings = await Settings.findOne();
+
+  if (!settings) {
+    settings = await Settings.create({
+      restaurantName: "Demo Restaurant",
+      restaurantAddress: "Demo street",
+      phone: "0000000000",
+      email: "restaurant@example.com",
+      currency: "₹",
+      gstPercentage: 0,
+      serviceChargePercentage: 0,
+      openingTime: "09:00",
+      closingTime: "22:00",
+      invoiceFooter: "Thank you for visiting!",
+    });
+  }
+
+  return settings;
+};
+
+export const updateSettingsService = async (payload: SettingsType) => {
+  return await Settings.findOneAndUpdate({}, payload, {
+    new: true,
+    runValidators: true,
+  });
+};

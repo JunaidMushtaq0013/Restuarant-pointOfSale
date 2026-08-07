@@ -6,6 +6,35 @@ const settingsSchema = new Schema<SettingsType>(
     restaurantName: {
       type: String,
       required: true,
+      default: "",
+      trim: true,
+    },
+
+    restaurantAddress: {
+      type: String,
+      required: true,
+      default: "",
+      trim: true,
+    },
+
+    phone: {
+      type: String,
+      required: true,
+      default: "",
+      trim: true,
+    },
+
+    email: {
+      type: String,
+      required: true,
+      default: "",
+      trim: true,
+    },
+
+    currency: {
+      type: String,
+      required: true,
+      default: "₹",
       trim: true,
     },
 
@@ -23,11 +52,16 @@ const settingsSchema = new Schema<SettingsType>(
       min: 0,
     },
 
-    currency: {
+    openingTime: {
       type: String,
       required: true,
-      default: "₹",
-      trim: true,
+      default: "09:00",
+    },
+
+    closingTime: {
+      type: String,
+      required: true,
+      default: "22:00",
     },
 
     invoiceFooter: {

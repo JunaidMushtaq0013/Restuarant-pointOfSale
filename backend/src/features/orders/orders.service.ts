@@ -5,6 +5,7 @@ import { Menu } from "../menu/menu.model.js";
 import { PopulatedMenuType } from "../menu/menu.types.js";
 import { Inventory } from "../inventory/inventory.model.js";
 import mongoose from "mongoose";
+import { Settings } from "../settings/settings.model.js";
 
 export const createOrderService = async (payload: CreateOrderPayload) => {
   const session = await mongoose.startSession();
@@ -100,12 +101,20 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
     const totalAfterDiscount = subTotal - discountAmount;
 
     //later we will read it from settings
-    const gstPercentage = 0;
+
+    const settings = await Settings.findOne();
+
+    if (!settings) {
+      throw new Error("Restaurant settings not found.");
+    }
+
+    //now imported from settings
+    const gstPercentage = settings.gstPercentage;
 
     const gstAmount = (totalAfterDiscount * gstPercentage) / 100;
 
     //again later settings
-    const serviceChargePercentage = 0;
+    const serviceChargePercentage = settings.serviceChargePercentage;
 
     const serviceChargeAmount =
       (totalAfterDiscount * serviceChargePercentage) / 100;
@@ -254,23 +263,26 @@ export const cancelOrderService = async (id: string) => {
         throw new Error("Menu item not found.");
       }
 
-      await Inventory.findByIdAndUpdate(menuItem.inventory, {
-        $inc: {
-          quantity: item.quantity,
+      await Inventory.findByIdAndUpdate(
+        menuItem.inventory,
+        {
+          $inc: {
+            quantity: item.quantity,
+          },
         },
-      },
-      {
-            session
-        });
+        {
+          session,
+        },
+      );
     }
 
     order.status = "Cancelled";
 
-    await order.save({session});
-    await session.commitTransaction()
+    await order.save({ session });
+    await session.commitTransaction();
     return order;
   } catch (error) {
-     await session.abortTransaction();
+    await session.abortTransaction();
 
     throw error;
   } finally {
