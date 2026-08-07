@@ -8,11 +8,16 @@ import customerRoutes from "./features/customer/customer.routes.js";
 import orderRoutes from "./features/orders/orders.routes.js";
 import settingsRoutes from "./features/settings/settings.routes.js";
 import employeeRoutes from "./features/employee/employee.routes.js";
+import authRoutes from "./features/auth/auth.routes.js";
+import cookieParser from "cookie-parser";
 
 
 const app = express();
 
 app.use(cors());
+
+app.use(cookieParser());
+
 
 
 app.use(express.json());
@@ -32,6 +37,7 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/settings",settingsRoutes);
 app.use("/api/employees",employeeRoutes);
+app.use("/api/auth", authRoutes);
 
 
 app.use(globalErrorHandler);

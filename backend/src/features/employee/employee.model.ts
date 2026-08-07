@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import { Schema, model } from "mongoose";
 import { EmployeeType } from "./employee.types.js";
 
@@ -22,12 +23,14 @@ const employeeSchema = new Schema<EmployeeType>(
       required: true,
       unique: true,
       trim: true,
+      
     },
 
-    password: {
-      type: String,
-      required: true,
-    },
+   password: {
+  type: String,
+  required: true,
+  select: false,
+},
 
     role: {
       type: String,
@@ -44,6 +47,14 @@ const employeeSchema = new Schema<EmployeeType>(
     timestamps: true,
   }
 );
+
+employeeSchema.pre("save", async function () {
+  if (!this.isModified("password")) {
+    return;
+  }
+
+  this.password = await bcrypt.hash(this.password, 10);
+});
 
 export const Employee = model<EmployeeType>(
   "Employee",

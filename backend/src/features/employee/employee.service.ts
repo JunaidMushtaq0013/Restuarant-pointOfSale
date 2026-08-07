@@ -22,10 +22,13 @@ export const createEmployeeService = async (
     throw new Error("Phone number already exists.");
   }
 
-  return await Employee.create({
+  const employee = await Employee.create({
     ...payload,
     email,
   });
+
+
+return await Employee.findById(employee._id);
 };
 
 export const getEmployeesService = async () => {
