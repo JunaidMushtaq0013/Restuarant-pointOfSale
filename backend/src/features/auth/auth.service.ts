@@ -43,3 +43,17 @@ export const loginService = async (payload: LoginType) => {
     employee: employeeData,
   };
 };
+
+export const getMeService = async (employeeId: string) => {
+  const employee = await Employee.findById(employeeId);
+
+  if (!employee) {
+    throw new Error("Employee not found.");
+  }
+
+  if (!employee.isActive) {
+    throw new Error("Employee account is inactive.");
+  }
+
+  return employee;
+};
