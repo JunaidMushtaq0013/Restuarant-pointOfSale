@@ -63,6 +63,11 @@ const orderSchema = new Schema<OrderType>(
       enum: ["Dine In", "Takeaway"],
       required: true,
     },
+    table: {
+      type: Schema.Types.ObjectId,
+      ref: "Table",
+      default: null,
+    },
 
     subTotal: {
       type: Number,

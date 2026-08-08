@@ -10,20 +10,58 @@ import {
   deleteCustomerController,
 } from "./customer.controller.js";
 
+import { authenticate } from "../../middleware/authenticate.js";
+import { authorize } from "../../middleware/authorize.js";
+
 const router = Router();
 
-router.post("/", createCustomerController);
+router.post(
+  "/",
+  authenticate,
+  authorize("Manager", "Cashier", "Waiter"),
+  createCustomerController,
+);
 
-router.get("/", getAllCustomersController);
+router.get(
+  "/",
+  authenticate,
+  authorize("Manager", "Cashier", "Waiter"),
+  getAllCustomersController,
+);
 
-router.get("/active", getAllActiveCustomersController);
+router.get(
+  "/active",
+  authenticate,
+  authorize("Manager", "Cashier", "Waiter"),
+  getAllActiveCustomersController,
+);
 
-router.get("/:id", getCustomerByIdController);
+router.get(
+  "/:id",
+  authenticate,
+  authorize("Manager", "Cashier", "Waiter"),
+  getCustomerByIdController,
+);
 
-router.patch("/:id", updateCustomerController);
+router.patch(
+  "/:id",
+  authenticate,
+  authorize("Manager", "Cashier"),
+  updateCustomerController,
+);
 
-router.patch("/:id/toggle-active", toggleCustomerActiveController);
+router.patch(
+  "/:id/toggle-active",
+  authenticate,
+  authorize("Manager"),
+  toggleCustomerActiveController,
+);
 
-router.delete("/:id", deleteCustomerController);
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("Manager"),
+  deleteCustomerController,
+);
 
 export default router;

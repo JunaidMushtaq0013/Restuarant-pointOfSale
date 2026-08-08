@@ -6,6 +6,7 @@ import { PopulatedMenuType } from "../menu/menu.types.js";
 import { Inventory } from "../inventory/inventory.model.js";
 import mongoose from "mongoose";
 import { Settings } from "../settings/settings.model.js";
+import { Table } from "../tables/tables.model.js";
 
 export const createOrderService = async (payload: CreateOrderPayload) => {
   const session = await mongoose.startSession();
@@ -33,6 +34,24 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
         customer = customers[0];
       }
     }
+
+    let table = null;
+
+    if (payload.table) {
+      table = await Table.findOne({
+        _id: payload.table,
+        isActive: true,
+      }).session(session);
+
+      if (!table) {
+        throw new Error("Table not found or inactive.");
+      }
+
+      if (table.status === "Occupied") {
+        throw new Error("Table is already occupied.");
+      }
+    }
+
     //here i am staring with custom order number ORD-000001 and then checking if there is any order in the database and if there is then i am getting the last order number and incrementing it by 1 and then creating a new order number with the incremented value and then using that order number for the new order
     let orderNumber = "ORD-000001";
 
@@ -132,6 +151,8 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
 
           orderType: payload.orderType,
 
+          table: table?._id ?? null,
+
           subTotal,
 
           discountPercentage,
@@ -150,12 +171,18 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
     );
 
     const order = orders[0];
+  
+    if (table) {
+      table.status = "Occupied";
+      await table.save({ session });
+    }
 
     await session.commitTransaction();
 
     return await Order.findById(order._id)
       .populate("customer", "name phone")
-      .populate("items.menu", "name sellingPrice type");
+      .populate("items.menu", "name sellingPrice type")
+      .populate("table", "tableNumber capacity status");
   } catch (error) {
     await session.abortTransaction();
 
@@ -227,14 +254,50 @@ export const updatePaymentStatusService = async (
   id: string,
   paymentStatus: "Pending" | "Paid",
 ) => {
-  return await Order.findByIdAndUpdate(
-    id,
-    { paymentStatus },
-    {
-      new: true,
-      runValidators: true,
-    },
-  );
+  const session = await mongoose.startSession();
+
+  session.startTransaction();
+
+  try {
+    const order = await Order.findById(id).session(session);
+
+    if (!order) {
+      throw new Error("Order not found.");
+    }
+
+    // Update payment status
+    order.paymentStatus = paymentStatus;
+
+    await order.save({ session });
+
+    // Release table when payment is completed
+    if (paymentStatus === "Paid" && order.table) {
+      await Table.findByIdAndUpdate(
+        order.table,
+        {
+          status: "Available",
+        },
+        {
+          session,
+          new: true,
+          runValidators: true,
+        },
+      );
+    }
+
+    await session.commitTransaction();
+
+    return await Order.findById(order._id)
+      .populate("customer", "name phone")
+      .populate("items.menu", "name sellingPrice type")
+      .populate("table", "tableNumber capacity status");
+  } catch (error) {
+    await session.abortTransaction();
+
+    throw error;
+  } finally {
+    session.endSession();
+  }
 };
 
 export const cancelOrderService = async (id: string) => {

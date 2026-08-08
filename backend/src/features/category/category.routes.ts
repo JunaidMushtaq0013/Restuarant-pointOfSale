@@ -7,16 +7,44 @@ import {
   deleteCategory,
 } from "./category.controller.js";
 
+import { authenticate } from "../../middleware/authenticate.js";
+import { authorize } from "../../middleware/authorize.js";
+
 const router = Router();
 
-router.post("/", createCategory);
+router.post(
+  "/",
+  authenticate,
+  authorize("Manager"),
+  createCategory,
+);
 
-router.get("/", getAllCategories);
+router.get(
+  "/",
+  authenticate,
+  authorize("Manager", "Cashier", "Waiter", "Chef"),
+  getAllCategories,
+);
 
-router.get("/:id", getCategoryById);
+router.get(
+  "/:id",
+  authenticate,
+  authorize("Manager", "Cashier", "Waiter", "Chef"),
+  getCategoryById,
+);
 
-router.patch("/:id", updateCategory);
+router.patch(
+  "/:id",
+  authenticate,
+  authorize("Manager"),
+  updateCategory,
+);
 
-router.delete("/:id", deleteCategory);
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("Manager"),
+  deleteCategory,
+);
 
 export default router;

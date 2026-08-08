@@ -44,8 +44,14 @@ export const createOrderSchema = z
 
     orderType: z.enum(["Dine In", "Takeaway"]),
 
-    discountPercentage: z.number().min(0).max(100).default(0),
+    table: z.string().trim().min(1).nullable().optional(),
+
+    discountPercentage: z
+      .number()
+      .min(0)
+      .max(100)
+      .default(0),
   })
   .strict();
 
-export const updateOrderSchema = createOrderSchema.partial();   
+export const updateOrderSchema = createOrderSchema.partial();

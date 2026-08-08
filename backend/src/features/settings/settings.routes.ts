@@ -3,11 +3,23 @@ import {
   getSettingsController,
   updateSettingsController,
 } from "./settings.controller.js";
+import { authenticate } from "../../middleware/authenticate.js";
+import { authorize } from "../../middleware/authorize.js";
 
 const router = Router();
 
-router.get("/", getSettingsController);
+router.get(
+  "/",
+  authenticate,
+  authorize("Manager"),
+  getSettingsController,
+);
 
-router.patch("/", updateSettingsController);
+router.patch(
+  "/",
+  authenticate,
+  authorize("Manager"),
+  updateSettingsController,
+);
 
 export default router;

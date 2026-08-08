@@ -13,42 +13,39 @@ export interface OrderItemType {
 }
 
 export interface OrderType {
-    orderNumber: string;
+  orderNumber: string;
 
-    customer?: Types.ObjectId;
+  customer?: Types.ObjectId;
 
-    customerName?: string;
+  customerName?: string;
 
-    items: OrderItemType[];
+  items: OrderItemType[];
 
-    orderType: "Dine In" | "Takeaway";
+  orderType: "Dine In" | "Takeaway";
 
-    subTotal: number;
+  table?: Types.ObjectId | null;
 
-    discountPercentage: number;
+  subTotal: number;
 
-    discountAmount: number;
+  discountPercentage: number;
 
-    gstPercentage: number;
+  discountAmount: number;
 
-    gstAmount: number;
+  gstPercentage: number;
 
-    serviceChargePercentage: number;
+  gstAmount: number;
 
-    serviceChargeAmount: number;
+  serviceChargePercentage: number;
 
-    grandTotal: number;
+  serviceChargeAmount: number;
 
-    paymentStatus: "Pending" | "Paid";
+  grandTotal: number;
 
-    status:
-  | "Pending"
-  | "Preparing"
-  | "Ready"
-  | "Served"
-  | "Cancelled";
+  paymentStatus: "Pending" | "Paid";
 
-    isActive: boolean;
+  status: "Pending" | "Preparing" | "Ready" | "Served" | "Cancelled";
+
+  isActive: boolean;
 }
 
 export interface CreateOrderPayload {
@@ -62,6 +59,8 @@ export interface CreateOrderPayload {
   }[];
 
   orderType: "Dine In" | "Takeaway";
+
+  table?: Types.ObjectId | null;
 
   discountPercentage?: number;
 }

@@ -10,6 +10,8 @@ import settingsRoutes from "./features/settings/settings.routes.js";
 import employeeRoutes from "./features/employee/employee.routes.js";
 import authRoutes from "./features/auth/auth.routes.js";
 import cookieParser from "cookie-parser";
+import tableRoutes from "./features/tables/tables.routes.js";
+import dashboardRoutes from "./features/dashboard/dashboard.routes.js";
 
 
 const app = express();
@@ -38,6 +40,8 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/settings",settingsRoutes);
 app.use("/api/employees",employeeRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/tables", tableRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 
 app.use(globalErrorHandler);
