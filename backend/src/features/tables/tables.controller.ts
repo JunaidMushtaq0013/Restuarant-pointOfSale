@@ -2,10 +2,12 @@ import { Request, Response } from "express";
 import {
   createTableService,
   getTablesService,
+  getInacticeTablesService,
   getTableByIdService,
   updateTableService,
   deleteTableService,
   updateTableStatusService,
+  activateTableService,
 } from "./tables.service.js";
 
 export const createTableController = async (
@@ -34,6 +36,20 @@ export const getTablesController = async (
   });
 };
 
+export const getInactiveTablesController = async (
+  req: Request,
+  res: Response
+) => {
+  const tables = await getInacticeTablesService();
+
+  res.status(200).json({
+    status: "success",
+    message: "In active Tables retrieved successfully.",
+    data: tables,
+  });
+};
+
+
 
 export const getTableByIdController = async (
   req: Request<{ id: string }>,
@@ -44,6 +60,21 @@ export const getTableByIdController = async (
   res.status(200).json({
     status: "success",
     message: "Table retrieved successfully.",
+    data: table,
+  });
+};
+
+export const activateTableController = async (
+  req: Request<{id:string}>,
+  res: Response,
+) => {
+  const { id } = req.params;
+
+  const table = await activateTableService(id);
+
+  res.status(200).json({
+    status: "success",
+    message: "Table activated successfully.",
     data: table,
   });
 };

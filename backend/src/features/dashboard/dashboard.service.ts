@@ -54,6 +54,49 @@ export const getDashboardService = async () => {
       ? todaySalesResult[0].total
       : 0;
 
+      // --------------------------------
+// LAST 7 DAYS SALES
+// --------------------------------
+
+const sevenDaysAgo = new Date();
+sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+sevenDaysAgo.setHours(0, 0, 0, 0);
+
+const salesTrend = await Order.aggregate([
+  {
+    $match: {
+      createdAt: {
+        $gte: sevenDaysAgo,
+        $lte: endOfDay,
+      },
+      paymentStatus: "Paid",
+    },
+  },
+  {
+    $group: {
+      _id: {
+        $dateToString: {
+          format: "%Y-%m-%d",
+          date: "$createdAt",
+        },
+      },
+      sales: {
+        $sum: "$grandTotal",
+      },
+    },
+  },
+  {
+    $sort: {
+      _id: 1,
+    },
+  },
+]);
+
+// TEMPORARY DEBUG
+//console.log("Today:", new Date());
+//console.log("Start:", sevenDaysAgo);
+//console.log("End:", endOfDay);
+
   // --------------------------------
   // ORDER STATUS COUNTS
   // --------------------------------
@@ -120,13 +163,37 @@ export const getDashboardService = async () => {
 
   const totalCustomers = await Customer.countDocuments();
 
+ const formattedSalesTrend = [];
+
+for (let i = 0; i < 7; i++) {
+  const date = new Date(sevenDaysAgo);
+
+  date.setDate(sevenDaysAgo.getDate() + i);
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  const dateString = `${year}-${month}-${day}`;
+
+  const daySales = salesTrend.find(
+    (item) => item._id === dateString
+  );
+
+  formattedSalesTrend.push({
+    date: dateString,
+    sales: daySales?.sales || 0,
+  });
+}
+
   // --------------------------------
   // RETURN DASHBOARD
   // --------------------------------
 
-  return {
-    todaySales,
-    todayOrders,
+return {
+  todaySales,
+  todayOrders,
+  salesTrend: formattedSalesTrend,
 
     orders: {
       pending: pendingOrders,

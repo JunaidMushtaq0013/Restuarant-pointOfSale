@@ -6,6 +6,8 @@ import {
   updateTableController,
   deleteTableController,
   updateTableStatusController,
+  getInactiveTablesController,
+  activateTableController,
 } from "./tables.controller.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
@@ -24,6 +26,18 @@ router.get(
   authenticate,
   authorize("Manager", "Cashier", "Waiter"),
   getTablesController,
+);
+router.get(
+  "/inactive",
+  authenticate,
+  authorize("Manager"),
+  getInactiveTablesController,
+);
+router.patch(
+  "/:id/activate",
+  authenticate,
+  authorize("Manager"),
+  activateTableController,
 );
 
 router.get(

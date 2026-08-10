@@ -14,12 +14,30 @@ export const getAllInventoryService = async() => {
     return inventory;
 };
 
+export const getInactiveInventoryService = async () => {
+  return await Inventory.find({
+    isActive: false,
+  }).sort({ createdAt: -1 });
+};
 
 
 
 export const getInventoryByIdService = async(id: string) => {
     const inventory = await Inventory.findById(id);
     return inventory;
+};
+export const activateInventoryService = async (id: string) => {
+  const inventory = await Inventory.findByIdAndUpdate(
+    id,
+    { isActive: true },
+    { new: true }
+  );
+
+  if (!inventory) {
+    throw new Error("Inventory item not found.");
+  }
+
+  return inventory;
 };
 
 export const updateInventoryService = async(id: string,  payload:Partial<InventoryType>) => {

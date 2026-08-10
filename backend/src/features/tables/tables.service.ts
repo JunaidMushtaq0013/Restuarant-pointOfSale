@@ -19,12 +19,35 @@ export const getTablesService = async () => {
   }).sort({ tableNumber: 1 });
 };
 
+export const getInacticeTablesService = async () => {
+  return await Table.find({
+    isActive: false,
+  }).sort({ tableNumber: 1 });
+};
+
 export const getTableByIdService = async (id: string) => {
   const table = await Table.findById(id);
 
   if (!table) {
     throw new Error("Table not found.");
   }
+
+  return table;
+};
+
+export const activateTableService = async (id: string) => {
+  const table = await Table.findOne({
+    _id: id,
+    isActive: false,
+  });
+
+  if (!table) {
+    throw new Error("Inactive table not found.");
+  }
+
+  table.isActive = true;
+
+  await table.save();
 
   return table;
 };
