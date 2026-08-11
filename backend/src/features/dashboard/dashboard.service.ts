@@ -54,6 +54,10 @@ export const getDashboardService = async () => {
       ? todaySalesResult[0].total
       : 0;
 
+
+
+const averageOrderValue =
+  todayOrders > 0 ? todaySales / todayOrders : 0;
       // --------------------------------
 // LAST 7 DAYS SALES
 // --------------------------------
@@ -92,10 +96,56 @@ const salesTrend = await Order.aggregate([
   },
 ]);
 
-// TEMPORARY DEBUG
-//console.log("Today:", new Date());
-//console.log("Start:", sevenDaysAgo);
-//console.log("End:", endOfDay);
+
+// --------------------------------
+// TOP SELLING ITEMS - LAST 7 DAYS
+// --------------------------------
+
+const topSellingItems = await Order.aggregate([
+  {
+    $match: {
+      createdAt: {
+        $gte: sevenDaysAgo,
+        $lte: endOfDay,
+      },
+      paymentStatus: "Paid",
+    },
+  },
+
+  {
+    $unwind: "$items",
+  },
+
+  {
+    $group: {
+      _id: "$items.menu",
+
+      name: {
+        $first: "$items.name",
+      },
+
+      quantity: {
+        $sum: "$items.quantity",
+      },
+
+      sales: {
+        $sum: "$items.total",
+      },
+    },
+  },
+
+  {
+    $sort: {
+      quantity: -1,
+    },
+  },
+
+  {
+    $limit: 5,
+  },
+]);
+
+
 
   // --------------------------------
   // ORDER STATUS COUNTS
@@ -128,6 +178,22 @@ const salesTrend = await Order.aggregate([
       paymentStatus: "Paid",
     }),
   ]);
+
+
+  // --------------------------------
+// LIVE ORDERS
+// --------------------------------
+
+const liveOrders = await Order.find({
+  status: {
+    $in: ["Pending", "Preparing", "Ready"],
+  },
+})
+  .sort({ createdAt: -1 })
+  .limit(5)
+  .select(
+    "orderNumber customerName grandTotal status orderType createdAt"
+  );
 
   // --------------------------------
   // TABLE COUNTS
@@ -193,23 +259,28 @@ for (let i = 0; i < 7; i++) {
 return {
   todaySales,
   todayOrders,
+   averageOrderValue,
   salesTrend: formattedSalesTrend,
 
-    orders: {
-      pending: pendingOrders,
-      preparing: preparingOrders,
-      ready: readyOrders,
-      served: servedOrders,
-      paid: paidOrders,
-    },
+  orders: {
+    pending: pendingOrders,
+    preparing: preparingOrders,
+    ready: readyOrders,
+    served: servedOrders,
+    paid: paidOrders,
+  },
 
-    tables: {
-      available: availableTables,
-      occupied: occupiedTables,
-    },
+  tables: {
+    available: availableTables,
+    occupied: occupiedTables,
+  },
 
-    lowStockItems,
+  lowStockItems,
 
-    totalCustomers,
-  };
+  totalCustomers,
+
+  liveOrders,
+
+  topSellingItems,
+};
 };

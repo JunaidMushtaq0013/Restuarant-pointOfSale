@@ -1,3 +1,4 @@
+import { Order } from "../orders/orders.model.js";
 import { Customer } from "./customer.model.js";
 import { CustomerType } from "./customer.types.js";
 
@@ -10,8 +11,33 @@ export const getAllCustomersService = async () => {
   return await Customer.find().sort({ createdAt: -1 });
 };
 
-export const getAllActiveCustomersService = async () => {
-  return await Customer.find({ isActive: true }).sort({ createdAt: -1 });
+export const getAllActiveCustomersService = async (
+  search?: string,
+) => {
+  const filter: any = {
+    isActive: true,
+  };
+
+  if (search) {
+    filter.$or = [
+      {
+        name: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+      {
+        phone: {
+          $regex: search,
+          $options: "i",
+        },
+      },
+    ];
+  }
+
+  return await Customer.find(filter).sort({
+    createdAt: -1,
+  });
 };
 
 export const getCustomerByIdService = async (id: string) => {
@@ -22,6 +48,12 @@ export const getCustomerByIdService = async (id: string) => {
   }
 
   return customer;
+};
+
+export const getCustomerOrdersService = async (customerId: string) => {
+  return await Order.find({
+    customer: customerId,
+  }).sort({ createdAt: -1 });
 };
 
 export const updateCustomerService = async (

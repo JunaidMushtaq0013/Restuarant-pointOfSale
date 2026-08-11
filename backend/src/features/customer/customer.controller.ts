@@ -8,6 +8,7 @@ import {
   updateCustomerService,
   toggleCustomerActiveService,
   deleteCustomerService,
+  getCustomerOrdersService,
 } from "./customer.service.js";
 
 export const createCustomerController = async (
@@ -49,15 +50,37 @@ export const getAllCustomersController = async (
 export const getAllActiveCustomersController = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const customers = await getAllActiveCustomersService();
+    const customers = await getAllActiveCustomersService(
+      req.query.search as string | undefined,
+    );
 
     res.status(200).json({
       status: "success",
       message: "Active customers retrieved successfully",
       data: customers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCustomerOrdersController = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const orders = await getCustomerOrdersService(
+      req.params.id,
+    );
+
+    res.status(200).json({
+      status: "success",
+      message: "Customer orders retrieved successfully",
+      data: orders,
     });
   } catch (error) {
     next(error);

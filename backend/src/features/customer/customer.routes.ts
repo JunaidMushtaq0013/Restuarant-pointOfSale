@@ -8,6 +8,7 @@ import {
   updateCustomerController,
   toggleCustomerActiveController,
   deleteCustomerController,
+  getCustomerOrdersController,
 } from "./customer.controller.js";
 
 import { authenticate } from "../../middleware/authenticate.js";
@@ -34,6 +35,13 @@ router.get(
   authenticate,
   authorize("Manager", "Cashier", "Waiter"),
   getAllActiveCustomersController,
+);
+
+router.get(
+  "/:id/orders",
+  authenticate,
+  authorize("Manager", "Cashier", "Waiter"),
+  getCustomerOrdersController,
 );
 
 router.get(

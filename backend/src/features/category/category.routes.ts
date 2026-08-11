@@ -5,6 +5,8 @@ import {
   getCategoryById,
   updateCategory,
   deleteCategory,
+  getAllInactiveCategories,
+  activateCategory,
 } from "./category.controller.js";
 
 import { authenticate } from "../../middleware/authenticate.js";
@@ -24,6 +26,20 @@ router.get(
   authenticate,
   authorize("Manager", "Cashier", "Waiter", "Chef"),
   getAllCategories,
+);
+
+router.get(
+  "/inactive",
+  authenticate,
+  authorize("Manager"),
+  getAllInactiveCategories,
+);
+
+router.patch(
+  "/:id/activate",
+  authenticate,
+  authorize("Manager"),
+  activateCategory,
 );
 
 router.get(

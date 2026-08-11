@@ -6,6 +6,9 @@ import Login from "../pages/Login/Login";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Tables from "../pages/Tables/Tables";
 import Inventory from "../pages/Inventory/Inventory";
+import Customers from "../pages/Customer/customer";
+import Categories from "../pages/Categories/Categories";
+import Employees from "../pages/Employees/Employees";
 
 const AppRoutes = () => {
   return (
@@ -33,6 +36,24 @@ const AppRoutes = () => {
               element={<ProtectedRoute allowedRoles={["Manager", "Chef"]} />}
             >
               <Route path="/inventory" element={<Inventory />} />
+            </Route>
+
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={["Manager", "Cashier", "Waiter"]}
+                />
+              }
+            >
+              <Route path="/customers" element={<Customers />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["Manager"]} />}>
+              <Route path="/categories" element={<Categories />} />
+            </Route>
+
+            <Route element={<ProtectedRoute allowedRoles={["Manager"]} />}>
+              <Route path="/employees" element={<Employees />} />
             </Route>
           </Route>
         </Route>

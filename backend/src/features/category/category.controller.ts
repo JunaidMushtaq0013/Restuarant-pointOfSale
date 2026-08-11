@@ -5,6 +5,8 @@ import {
   getCategoryByIdService,
   updateCategoryService,
   deleteCategoryService,
+  activateCategoryService,
+  getAllInactiveCategoriesService,
 } from "./category.service.js";
 
 
@@ -32,7 +34,9 @@ export const getAllCategories = async (
   next: NextFunction
 ) => {
   try {
-    const categories = await getAllCategoriesService();
+    const categories = await getAllCategoriesService(
+  req.query.search as string | undefined,
+);
 
     res.status(200).json({
       success: true,
@@ -41,6 +45,45 @@ export const getAllCategories = async (
     });
   } catch (error) {
        next(error);
+  }
+};
+
+export const getAllInactiveCategories = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const categories =
+      await getAllInactiveCategoriesService();
+
+    res.status(200).json({
+      success: true,
+      message: "Inactive categories fetched successfully.",
+      data: categories,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const activateCategory = async (
+  req: Request<{id:string}>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const category =
+      await activateCategoryService(req.params.id );
+
+    res.status(200).json({
+      success: true,
+      message: "Category activated successfully.",
+      data: category,
+    });
+  } catch (error) {
+    next(error);
   }
 };
 
