@@ -26,6 +26,11 @@ export const updateSettingsSchema = z.object({
     .trim()
     .min(1, "Currency is required."),
 
+  gstNumber: z
+    .string()
+    .trim()
+    .min(1, "GST number is required."),
+
   gstPercentage: z
     .number()
     .min(0, "GST percentage cannot be negative."),

@@ -11,7 +11,7 @@ const router = Router();
 router.get(
   "/",
   authenticate,
-  authorize("Manager"),
+  authorize("Manager", "Cashier", "Waiter", "Chef"),
   getSettingsController,
 );
 

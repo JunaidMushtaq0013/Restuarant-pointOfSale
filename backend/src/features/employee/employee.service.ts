@@ -31,6 +31,29 @@ export const createEmployeeService = async (
 return await Employee.findById(employee._id);
 };
 
+export const activateEmployeeService = async (
+  id: string,
+) => {
+  const employee = await Employee.findByIdAndUpdate(
+    id,
+    {
+      isActive: true,
+    },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+
+  if (!employee) {
+    throw new Error("Employee not found.");
+  }
+
+  return employee;
+};
+
+
+
 export const getEmployeesService = async () => {
   return await Employee.find().sort({
     createdAt: -1,

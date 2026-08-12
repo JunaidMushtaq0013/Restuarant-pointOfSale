@@ -11,6 +11,7 @@ export const getSettingsService = async () => {
       phone: "0000000000",
       email: "restaurant@example.com",
       currency: "₹",
+      gstNumber: "",
       gstPercentage: 0,
       serviceChargePercentage: 0,
       openingTime: "09:00",

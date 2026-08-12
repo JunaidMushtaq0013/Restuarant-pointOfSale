@@ -10,13 +10,13 @@ export const authenticate = async (
   const token = req.cookies.token;
 
   if (!token) {
-    throw new Error("Authentication token is missing.");
+    return res.status(401).json({
+      success: false,
+      message: "Authentication token is missing.",
+    });
   }
 
-  const decoded = jwt.verify(
-    token,
-    process.env.JWT_SECRET!,
-  ) as JwtUser;
+  const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtUser;
 
   req.user = decoded;
 

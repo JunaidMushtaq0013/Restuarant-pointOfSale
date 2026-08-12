@@ -8,7 +8,7 @@ const router = Router();
 router.get(
   "/",
   authenticate,
-  authorize("Manager", "Cashier"),
+  authorize("Manager", "Cashier", "Chef", "Waiter"),
   getDashboardController,
 );
 

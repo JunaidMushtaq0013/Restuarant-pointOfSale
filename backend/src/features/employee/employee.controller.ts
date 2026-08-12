@@ -5,7 +5,9 @@ import {
   getEmployeeByIdService,
   updateEmployeeService,
   updateEmployeeStatusService,
+  activateEmployeeService,
 } from "./employee.service.js";
+import { Employee } from "./employee.model.js";
 
 export const createEmployeeController = async (
   req: Request,
@@ -30,6 +32,21 @@ export const getEmployeesController = async (
     status: "success",
     message: "Employees retrieved successfully.",
     data: employees,
+  });
+};
+
+export const activateEmployeeController = async (
+  req: Request<{ id: string }>,
+  res: Response,
+) => {
+  const employee = await activateEmployeeService(
+    req.params.id,
+  );
+
+  res.status(200).json({
+    status: "success",
+    message: "Employee activated successfully.",
+    data: employee,
   });
 };
 
@@ -61,6 +78,8 @@ export const updateEmployeeController = async (
     data: employee,
   });
 };
+
+
 
 export const updateEmployeeStatusController = async (
   req: Request<{ id: string }>,

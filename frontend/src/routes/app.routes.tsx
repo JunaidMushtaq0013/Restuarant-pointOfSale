@@ -9,6 +9,9 @@ import Inventory from "../pages/Inventory/Inventory";
 import Customers from "../pages/Customer/customer";
 import Categories from "../pages/Categories/Categories";
 import Employees from "../pages/Employees/Employees";
+import Menu from "../pages/Menu/Menu";
+import Kitchen from "../pages/Kitchen/Kitchen";
+import Settings from "../pages/Settings/Settings";
 
 const AppRoutes = () => {
   return (
@@ -54,6 +57,23 @@ const AppRoutes = () => {
 
             <Route element={<ProtectedRoute allowedRoles={["Manager"]} />}>
               <Route path="/employees" element={<Employees />} />
+              <Route path="/settings" element={<Settings />} />
+            </Route>
+
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={["Manager", "Cashier", "Waiter", "Chef"]}
+                />
+              }
+            >
+              <Route path="/menu" element={<Menu />} />
+            </Route>
+
+            <Route
+              element={<ProtectedRoute allowedRoles={["Manager", "Chef"]} />}
+            >
+              <Route path="/kitchen" element={<Kitchen />} />
             </Route>
           </Route>
         </Route>

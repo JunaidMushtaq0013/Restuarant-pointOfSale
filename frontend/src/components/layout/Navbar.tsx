@@ -1,8 +1,35 @@
+import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
+import api from "../../api/axious";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const [restaurantName, setRestaurantName] = useState("Warisoft POS");
+
+  useEffect(() => {
+    const getRestaurantName = async () => {
+      try {
+        const response = await api.get("/settings");
+        setRestaurantName(response.data.data.restaurantName || "Warisoft POS");
+      } catch (error) {
+        console.error("Failed to load restaurant name:", error);
+      }
+    };
+
+    const handleSettingsUpdated = (event: Event) => {
+      const { restaurantName: updatedName } = (
+        event as CustomEvent<{ restaurantName: string }>
+      ).detail;
+
+      setRestaurantName(updatedName || "Warisoft POS");
+    };
+
+    getRestaurantName();
+    window.addEventListener("settings-updated", handleSettingsUpdated);
+
+    return () => window.removeEventListener("settings-updated", handleSettingsUpdated);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -17,7 +44,7 @@ const Navbar = () => {
     <header className="h-16 border-b bg-white">
       <div className="flex h-full items-center justify-between px-6">
         <h1 className="text-xl font-bold text-gray-800">
-          Warisoft POS
+          {restaurantName}
         </h1>
 
         <div className="flex items-center gap-4">

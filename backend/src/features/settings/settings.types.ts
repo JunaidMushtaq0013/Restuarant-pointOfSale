@@ -9,6 +9,8 @@ export interface SettingsType {
 
   currency: string;
 
+  gstNumber: string;
+
   gstPercentage: number;
 
   serviceChargePercentage: number;

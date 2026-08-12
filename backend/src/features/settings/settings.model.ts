@@ -38,6 +38,13 @@ const settingsSchema = new Schema<SettingsType>(
       trim: true,
     },
 
+    gstNumber: {
+      type: String,
+      required: true,
+      default: "",
+      trim: true,
+    },
+
     gstPercentage: {
       type: Number,
       required: true,

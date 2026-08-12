@@ -11,9 +11,19 @@ const Sidebar = () => {
       roles: ["Manager", "Cashier", "Waiter", "Chef"],
     },
     {
+      name: "New Order",
+      path: "/neworder",
+      roles: ["Manager", "Cashier", "Waiter"],
+    },
+    {
       name: "Orders",
       path: "/orders",
       roles: ["Manager", "Cashier", "Waiter", "Chef"],
+    },
+    {
+      name: "Kitchen",
+      path: "/kitchen",
+      roles: ["Manager", "Chef"],
     },
     {
       name: "Tables",
@@ -23,7 +33,7 @@ const Sidebar = () => {
     {
       name: "Categories",
       path: "/categories",
-       roles: ["Manager"],
+      roles: ["Manager"],
     },
     {
       name: "Menu",
@@ -53,16 +63,24 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-slate-900 text-white">
-      <div className="border-b border-slate-800 px-6 py-5">
-        <h1 className="text-xl font-bold">Warisoft POS</h1>
+    <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col overflow-hidden bg-slate-900 text-white">
+      {/* Header */}
+      <div className="shrink-0 border-b border-slate-800 px-6 py-5">
+        <h1 className="text-xl font-bold">
+          Warisoft POS
+        </h1>
 
-        <p className="mt-1 text-xs text-slate-400">Restaurant Management</p>
+        <p className="mt-1 text-xs text-slate-400">
+          Restaurant Management
+        </p>
       </div>
 
-      <nav className="space-y-1 px-3 py-5">
+      {/* Navigation */}
+      <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-5">
         {navItems
-          .filter((item) => item.roles.includes(user?.role ?? ""))
+          .filter((item) =>
+            item.roles.includes(user?.role ?? ""),
+          )
           .map((item) => (
             <NavLink
               key={item.path}

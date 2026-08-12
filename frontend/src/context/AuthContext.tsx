@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import api from "../api/axious";
@@ -19,6 +20,7 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   isAuthenticated: boolean;
+  login: (employee: AuthUser) => void;
   logout: () => Promise<void>;
 }
 
@@ -33,28 +35,45 @@ export const AuthProvider = ({
 }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const authRequestId = useRef(0);
 
   useEffect(() => {
     const checkAuth = async () => {
+      const requestId = ++authRequestId.current;
+
       try {
         const response = await api.get("/auth/me");
 
-        setUser(response.data.data.employee);
+        if (requestId === authRequestId.current) {
+          setUser(response.data.data.employee);
+        }
       } catch {
-        setUser(null);
+        if (requestId === authRequestId.current) {
+          setUser(null);
+        }
       } finally {
-        setLoading(false);
+        if (requestId === authRequestId.current) {
+          setLoading(false);
+        }
       }
     };
 
     checkAuth();
   }, []);
 
+  const login = (employee: AuthUser) => {
+    authRequestId.current += 1;
+    setUser(employee);
+    setLoading(false);
+  };
+
   const logout = async () => {
     try {
       await api.post("/auth/logout");
     } finally {
+      authRequestId.current += 1;
       setUser(null);
+      setLoading(false);
     }
   };
 
@@ -64,6 +83,7 @@ export const AuthProvider = ({
         user,
         loading,
         isAuthenticated: !!user,
+        login,
         logout,
       }}
     >
