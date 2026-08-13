@@ -12,6 +12,8 @@ import Employees from "../pages/Employees/Employees";
 import Menu from "../pages/Menu/Menu";
 import Kitchen from "../pages/Kitchen/Kitchen";
 import Settings from "../pages/Settings/Settings";
+import Orders from "../pages/Orders/Orders";
+import NewOrder from "../pages/neworder/NewOrder";
 
 const AppRoutes = () => {
   return (
@@ -74,6 +76,26 @@ const AppRoutes = () => {
               element={<ProtectedRoute allowedRoles={["Manager", "Chef"]} />}
             >
               <Route path="/kitchen" element={<Kitchen />} />
+            </Route>
+
+            <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={["Manager", "Cashier", "Waiter", "Chef"]}
+                />
+              }
+            >
+              <Route path="/orders" element={<Orders />} />
+            </Route>
+
+              <Route
+              element={
+                <ProtectedRoute
+                  allowedRoles={["Manager", "Cashier", "Waiter", "Chef"]}
+                />
+              }
+            >
+              <Route path="/neworder" element={<NewOrder />} />
             </Route>
           </Route>
         </Route>

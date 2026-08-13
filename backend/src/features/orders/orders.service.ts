@@ -8,13 +8,17 @@ import mongoose from "mongoose";
 import { Settings } from "../settings/settings.model.js";
 import { Table } from "../tables/tables.model.js";
 
-export const createOrderService = async (payload: CreateOrderPayload) => {
+export const createOrderService = async (
+  payload: CreateOrderPayload,
+) => {
   const session = await mongoose.startSession();
 
   session.startTransaction();
+
   try {
     let customer = null;
 
+    // Find or create customer
     if (payload.customerPhone) {
       customer = await Customer.findOne({
         phone: payload.customerPhone,
@@ -35,6 +39,7 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
       }
     }
 
+    // Check table
     let table = null;
 
     if (payload.table) {
@@ -44,15 +49,19 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
       }).session(session);
 
       if (!table) {
-        throw new Error("Table not found or inactive.");
+        throw new Error(
+          "Table not found or inactive.",
+        );
       }
 
       if (table.status === "Occupied") {
-        throw new Error("Table is already occupied.");
+        throw new Error(
+          "Table is already occupied.",
+        );
       }
     }
 
-    //here i am staring with custom order number ORD-000001 and then checking if there is any order in the database and if there is then i am getting the last order number and incrementing it by 1 and then creating a new order number with the incremented value and then using that order number for the new order
+    // Generate order number
     let orderNumber = "ORD-000001";
 
     const lastOrder = await Order.findOne()
@@ -63,32 +72,55 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
       const lastOrderNumber = parseInt(
         lastOrder.orderNumber.replace("ORD-", ""),
       );
-      const newOrderNumber = lastOrderNumber + 1;
-      orderNumber = `ORD-${newOrderNumber.toString().padStart(6, "0")}`;
+
+      const newOrderNumber =
+        lastOrderNumber + 1;
+
+      orderNumber = `ORD-${newOrderNumber
+        .toString()
+        .padStart(6, "0")}`;
     }
+
+    // Prepare order items
     const orderItems: OrderItemType[] = [];
+
     let subTotal = 0;
+
     for (const item of payload.items) {
-      //here we are checking if the menu item is active and if the inventory is available for the menu item and also checking if the quantity is available in the inventory or not but after even .populate inventory in the menu item below when i did menuitem.inventory.quantity it was giving me undefined so i had to create a new interface in the menu.types.ts file called PopulatedMenuType which extends the MenuType and replaces the inventory field with the InventoryType and then i used that interface to typecast the menuItem variable below and then it worked fine and now i can access the inventory quantity of the menu item and check if it is available or not and also reduce the quantity in the inventory after the order is created successfully
-      const menuItem = (await Menu.findById(item.menu)
+      const menuItem = (await Menu.findById(
+        item.menu,
+      )
         .populate("inventory")
         .session(session)) as PopulatedMenuType | null;
+
       if (!menuItem) {
-        throw new Error(`Menu item with ID ${item.menu} not found.`);
+        throw new Error(
+          `Menu item with ID ${item.menu} not found.`,
+        );
       }
+
       if (!menuItem.isActive) {
-        throw new Error(`Menu item ${menuItem.name} is not active.`);
+        throw new Error(
+          `Menu item ${menuItem.name} is not active.`,
+        );
       }
+
       if (!menuItem.inventory) {
-        throw new Error("Inventory not found.");
+        throw new Error(
+          "Inventory not found.",
+        );
       }
-      if (menuItem.inventory.quantity < item.quantity) {
+
+      if (
+        menuItem.inventory.quantity <
+        item.quantity
+      ) {
         throw new Error(
           `Insufficient stock for menu item ${menuItem.name}. Available quantity: ${menuItem.inventory.quantity}`,
         );
       }
-      //for reducing stock quantity in inventory after checks and all this is something new that i learned before this i was doing menuitem.inventory.quantity and then .save() but that was not efficient .
 
+      // Reduce inventory
       await Inventory.findByIdAndUpdate(
         menuItem.inventory._id,
         {
@@ -100,7 +132,9 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
           session,
         },
       );
-      const total = menuItem.sellingPrice * item.quantity;
+
+      const total =
+        menuItem.sellingPrice * item.quantity;
 
       subTotal += total;
 
@@ -113,76 +147,123 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
       });
     }
 
-    const discountPercentage = payload.discountPercentage || 0;
+    // Discount
+    const discountPercentage =
+      payload.discountPercentage || 0;
 
-    const discountAmount = (subTotal * discountPercentage) / 100;
+    const discountAmount =
+      (subTotal * discountPercentage) / 100;
 
-    const totalAfterDiscount = subTotal - discountAmount;
+    const totalAfterDiscount =
+      subTotal - discountAmount;
 
-    //later we will read it from settings
-
-    const settings = await Settings.findOne();
+    // Restaurant settings
+    const settings =
+      await Settings.findOne();
 
     if (!settings) {
-      throw new Error("Restaurant settings not found.");
+      throw new Error(
+        "Restaurant settings not found.",
+      );
     }
 
-    //now imported from settings
-    const gstPercentage = settings.gstPercentage;
+    // GST
+    const gstPercentage =
+      settings.gstPercentage;
 
-    const gstAmount = (totalAfterDiscount * gstPercentage) / 100;
+    const gstAmount =
+      (totalAfterDiscount *
+        gstPercentage) /
+      100;
 
-    //again later settings
-    const serviceChargePercentage = settings.serviceChargePercentage;
+    // Service charge
+    const serviceChargePercentage =
+      settings.serviceChargePercentage;
 
     const serviceChargeAmount =
-      (totalAfterDiscount * serviceChargePercentage) / 100;
+      (totalAfterDiscount *
+        serviceChargePercentage) /
+      100;
 
-    const grandTotal = totalAfterDiscount + gstAmount + serviceChargeAmount;
+    // Grand total
+    const grandTotal =
+      totalAfterDiscount +
+      gstAmount +
+      serviceChargeAmount;
 
+    // Create order
     const orders = await Order.create(
       [
         {
           orderNumber,
+
           customer: customer?._id,
-          customerName: customer?.name,
+
+          customerName:
+            customer?.name,
 
           items: orderItems,
 
-          orderType: payload.orderType,
+          orderType:
+            payload.orderType,
 
-          table: table?._id ?? null,
+          table:
+            table?._id ?? null,
 
           subTotal,
 
           discountPercentage,
+
           discountAmount,
 
           gstPercentage,
+
           gstAmount,
 
           serviceChargePercentage,
+
           serviceChargeAmount,
 
           grandTotal,
+
+          // NEW
+          paymentStatus:
+            payload.paymentStatus,
         },
       ],
       { session },
     );
 
     const order = orders[0];
-  
+
+    // Occupy table
     if (table) {
       table.status = "Occupied";
-      await table.save({ session });
+
+      await table.save({
+        session,
+      });
     }
 
+    // Commit transaction
     await session.commitTransaction();
 
-    return await Order.findById(order._id)
-      .populate("customer", "name phone")
-      .populate("items.menu", "name sellingPrice type")
-      .populate("table", "tableNumber capacity status");
+    // Return populated order
+    return await Order.findById(
+      order._id,
+    )
+      .populate(
+        "customer",
+        "name phone",
+      )
+      .populate(
+        "items.menu",
+        "name sellingPrice type",
+      )
+      .populate(
+        "table",
+        "tableNumber capacity status",
+      );
   } catch (error) {
     await session.abortTransaction();
 
@@ -196,21 +277,27 @@ export const getAllOrdersService = async () => {
   return await Order.find()
     .sort({ createdAt: -1 })
     .populate("customer", "name phone")
-    .populate("items.menu", "name sellingPrice type");
+    .populate("items.menu", "name sellingPrice type")
+    .populate("table", "tableNumber capacity status");
 };
 
 export const getOrderByIdService = async (id: string) => {
   return await Order.findById(id)
     .populate("customer", "name phone")
-    .populate("items.menu", "name sellingPrice type");
+    .populate("items.menu", "name sellingPrice type")
+    .populate("table", "tableNumber capacity status");
 };
 
 export const updateOrderStatusService = async (
   id: string,
   status: "Pending" | "Preparing" | "Ready" | "Served" | "Cancelled",
 ) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
   // Step 1: Find the order
-  const order = await Order.findById(id);
+  const order = await Order.findById(id).session(session);
 
   // Step 2: Check if order exists
   if (!order) {
@@ -244,10 +331,31 @@ export const updateOrderStatusService = async (
   order.status = status;
 
   // Step 8: Save changes
-  await order.save();
+  await order.save({ session });
 
-  // Step 9: Return updated order
-  return order;
+  // A table is released when its dine-in order has been served, regardless of
+  // whether the bill is paid now or settled afterwards.
+  if (status === "Served" && order.table) {
+    await Table.findByIdAndUpdate(
+      order.table,
+      { status: "Available" },
+      { session, runValidators: true },
+    );
+  }
+
+  await session.commitTransaction();
+
+  // Step 9: Return updated order with details used by the Orders screen.
+  return await Order.findById(order._id)
+    .populate("customer", "name phone")
+    .populate("items.menu", "name sellingPrice type")
+    .populate("table", "tableNumber capacity status");
+  } catch (error) {
+    await session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
 };
 
 export const updatePaymentStatusService = async (
@@ -270,8 +378,12 @@ export const updatePaymentStatusService = async (
 
     await order.save({ session });
 
-    // Release table when payment is completed
-    if (paymentStatus === "Paid" && order.table) {
+    // Payment alone does not free a dine-in table; it is released on Served.
+    if (
+      paymentStatus === "Paid" &&
+      order.status === "Served" &&
+      order.table
+    ) {
       await Table.findByIdAndUpdate(
         order.table,
         {
@@ -315,35 +427,57 @@ export const cancelOrderService = async (id: string) => {
       throw new Error("Order is already cancelled.");
     }
 
-    if (order.status !== "Pending") {
-      throw new Error("Only pending orders can be cancelled.");
+    if (order.status === "Served") {
+      throw new Error("Served orders cannot be cancelled.");
     }
 
-    for (const item of order.items) {
-      const menuItem = await Menu.findById(item.menu).session(session);
+    // Once kitchen work has started, ingredients may already have been used.
+    // Restore stock only for orders that were never started.
+    if (order.status === "Pending") {
+      for (const item of order.items) {
+        const menuItem = await Menu.findById(item.menu).session(session);
 
-      if (!menuItem) {
-        throw new Error("Menu item not found.");
-      }
+        if (!menuItem) {
+          throw new Error("Menu item not found.");
+        }
 
-      await Inventory.findByIdAndUpdate(
-        menuItem.inventory,
-        {
-          $inc: {
-            quantity: item.quantity,
+        await Inventory.findByIdAndUpdate(
+          menuItem.inventory,
+          {
+            $inc: {
+              quantity: item.quantity,
+            },
           },
-        },
-        {
-          session,
-        },
-      );
+          {
+            session,
+          },
+        );
+      }
     }
 
     order.status = "Cancelled";
 
+    // A paid cancelled order must not be counted as sales while its refund is
+    // being processed. Keep the order for an auditable refund trail.
+    if (order.paymentStatus === "Paid") {
+      order.paymentStatus = "Refund Initiated";
+    }
+
     await order.save({ session });
+
+    if (order.table) {
+      await Table.findByIdAndUpdate(
+        order.table,
+        { status: "Available" },
+        { session, runValidators: true },
+      );
+    }
+
     await session.commitTransaction();
-    return order;
+    return await Order.findById(order._id)
+      .populate("customer", "name phone")
+      .populate("items.menu", "name sellingPrice type")
+      .populate("table", "tableNumber capacity status");
   } catch (error) {
     await session.abortTransaction();
 

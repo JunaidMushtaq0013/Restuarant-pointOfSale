@@ -4,6 +4,7 @@ import AddTableModal from "../../components/tables/AddTableModal";
 import EditTableModal from "../../components/tables/EditTableModal";
 import { useAuth } from "../../context/AuthContext";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import { toast } from "react-toastify";
 
 interface Table {
   _id: string;
@@ -23,6 +24,7 @@ const Tables = () => {
   const [tableToDeactivate, setTableToDeactivate] = useState<Table | null>(
     null,
   );
+  const [tableToRelease, setTableToRelease] = useState<Table | null>(null);
 
   const { user } = useAuth();
 
@@ -112,6 +114,27 @@ const Tables = () => {
       setTables((prevTables) => prevTables.filter((table) => table._id !== id));
     } catch (error) {
       console.error("Failed to deactivate table:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const releaseTable = async (id: string) => {
+    try {
+      setSubmitting(true);
+      const response = await api.patch(`/tables/${id}/status`, {
+        status: "Available",
+      });
+
+      setTables((previousTables) =>
+        previousTables.map((table) =>
+          table._id === id ? response.data.data : table,
+        ),
+      );
+      toast.success("Table released and is now available.");
+    } catch (error) {
+      console.error("Failed to release table:", error);
+      toast.error("Failed to release table.");
     } finally {
       setSubmitting(false);
     }
@@ -232,6 +255,17 @@ const Tables = () => {
                 Edit
               </button>
 
+              {(user?.role === "Manager" || user?.role === "Cashier") &&
+                table.status === "Occupied" && (
+                  <button
+                    onClick={() => setTableToRelease(table)}
+                    disabled={submitting}
+                    className="mt-2 w-full rounded-lg border border-green-200 px-3 py-2 text-sm font-medium text-green-700 transition hover:bg-green-50 disabled:opacity-50"
+                  >
+                    Release Table
+                  </button>
+                )}
+
               {user?.role === "Manager" && (
                 <button
                   onClick={() => setTableToDeactivate(table)}
@@ -334,6 +368,25 @@ const Tables = () => {
 
           await deactivateTable(tableToDeactivate._id);
           setTableToDeactivate(null);
+        }}
+      />
+
+      <ConfirmModal
+        isOpen={tableToRelease !== null}
+        title="Release Table"
+        message={
+          tableToRelease
+            ? `Release Table ${tableToRelease.tableNumber}? Only do this after confirming the guests have left or the order was handled separately.`
+            : ""
+        }
+        confirmText="Release"
+        cancelText="Cancel"
+        loading={submitting}
+        onCancel={() => setTableToRelease(null)}
+        onConfirm={async () => {
+          if (!tableToRelease) return;
+          await releaseTable(tableToRelease._id);
+          setTableToRelease(null);
         }}
       />
     </div>

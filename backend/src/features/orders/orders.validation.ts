@@ -51,7 +51,10 @@ export const createOrderSchema = z
       .min(0)
       .max(100)
       .default(0),
+
+    paymentStatus: z.enum(["Pending", "Paid"]),
   })
   .strict();
 
-export const updateOrderSchema = createOrderSchema.partial();
+export const updateOrderSchema =
+  createOrderSchema.partial();

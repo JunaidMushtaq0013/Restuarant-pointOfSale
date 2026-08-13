@@ -9,7 +9,7 @@ interface CustomerOrder {
   _id: string;
   orderNumber: string;
   grandTotal: number;
-  paymentStatus: "Pending" | "Paid";
+  paymentStatus: "Pending" | "Paid" | "Refund Initiated";
   status:
     | "Pending"
     | "Preparing"
@@ -40,7 +40,8 @@ const CustomerDetailsModal = ({
   }
 
   const totalSpent = orders.reduce(
-    (total, order) => total + order.grandTotal,
+    (total, order) =>
+      order.paymentStatus === "Paid" ? total + order.grandTotal : total,
     0,
   );
 
@@ -195,7 +196,15 @@ const CustomerDetailsModal = ({
                         </td>
 
                         <td className="px-4 py-3">
-                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-medium ${
+                              order.paymentStatus === "Paid"
+                                ? "bg-green-100 text-green-700"
+                                : order.paymentStatus === "Refund Initiated"
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-yellow-100 text-yellow-700"
+                            }`}
+                          >
                             {order.paymentStatus}
                           </span>
                         </td>

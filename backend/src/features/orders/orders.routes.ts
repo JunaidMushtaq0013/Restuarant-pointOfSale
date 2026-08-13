@@ -37,7 +37,7 @@ router.get(
 router.patch(
   "/:id/status",
   authenticate,
-  authorize("Manager", "Chef"),
+  authorize("Manager", "Cashier", "Waiter", "Chef"),
   updateOrderStatusController,
 );
 

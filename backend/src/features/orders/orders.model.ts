@@ -119,7 +119,7 @@ const orderSchema = new Schema<OrderType>(
 
     paymentStatus: {
       type: String,
-      enum: ["Pending", "Paid"],
+      enum: ["Pending", "Paid", "Refund Initiated"],
       default: "Pending",
     },
 
