@@ -12,13 +12,14 @@ import authRoutes from "./features/auth/auth.routes.js";
 import cookieParser from "cookie-parser";
 import tableRoutes from "./features/tables/tables.routes.js";
 import dashboardRoutes from "./features/dashboard/dashboard.routes.js";
+import { env } from "./config/env.js"
 
 
 const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: env.FRONTEND_URL,
     credentials: true,
   }),
 );
