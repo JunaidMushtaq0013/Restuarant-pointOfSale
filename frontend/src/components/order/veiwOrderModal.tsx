@@ -47,11 +47,14 @@ const ViewOrderModal = ({
 
     const items = order.items
       .map(
-        (item) => `<tr><td>${escapeHtml(item.name)}</td><td class="center">${item.quantity}</td><td class="right">${currency}${item.price.toFixed(2)}</td><td class="right">${currency}${item.total.toFixed(2)}</td></tr>`,
+        (item) =>
+          `<tr><td>${escapeHtml(item.name)}</td><td class="center">${item.quantity}</td><td class="right">${currency}${item.price.toFixed(2)}</td><td class="right">${currency}${item.total.toFixed(2)}</td></tr>`,
       )
       .join("");
 
-    invoiceWindow.document.write(`<!doctype html><html><head><title>Invoice ${escapeHtml(order.orderNumber)}</title><style>body{font-family:Arial,sans-serif;color:#111;margin:40px;max-width:720px}header{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:18px;margin-bottom:24px}h1,h2,p{margin:0}h1{font-size:24px}h2{font-size:18px;margin-bottom:6px}.muted{color:#555;font-size:13px}.details{display:flex;justify-content:space-between;margin-bottom:24px;gap:24px}.details div{min-width:0}table{width:100%;border-collapse:collapse}th,td{padding:10px 6px;border-bottom:1px solid #ddd;text-align:left}.right{text-align:right}.center{text-align:center}.totals{margin:20px 0 0 auto;width:290px}.totals div{display:flex;justify-content:space-between;padding:5px 0}.grand{font-size:18px;font-weight:bold;border-top:1px solid #111;margin-top:5px;padding-top:9px!important}footer{text-align:center;margin-top:42px;color:#555;font-size:13px}@media print{body{margin:20px}}</style></head><body><header><div><h1>${escapeHtml(businessName)}</h1><p class="muted">${businessDetails.map((detail) => escapeHtml(detail as string)).join("<br>")}</p></div><div class="right"><h2>TAX INVOICE</h2><p class="muted">${escapeHtml(order.orderNumber)}<br>${escapeHtml(formatDate(order.createdAt))}</p></div></header><section class="details"><div><strong>Bill To</strong><p class="muted">${escapeHtml(order.customer?.name || order.customerName || "Walk-in Customer")}<br>${escapeHtml(order.customer?.phone || "")}</p></div><div class="right"><strong>Order</strong><p class="muted">${escapeHtml(order.orderType)}${order.table?.tableNumber ? `<br>Table ${escapeHtml(order.table.tableNumber)}` : ""}<br>Payment: ${escapeHtml(order.paymentStatus)}</p></div></section><table><thead><tr><th>Item</th><th class="center">Qty</th><th class="right">Price</th><th class="right">Total</th></tr></thead><tbody>${items}</tbody></table><section class="totals"><div><span>Subtotal</span><span>${currency}${order.subTotal.toFixed(2)}</span></div>${order.discountAmount > 0 ? `<div><span>Discount</span><span>-${currency}${order.discountAmount.toFixed(2)}</span></div>` : ""}<div><span>GST</span><span>${currency}${order.gstAmount.toFixed(2)}</span></div><div><span>Service charge</span><span>${currency}${order.serviceChargeAmount.toFixed(2)}</span></div><div class="grand"><span>Grand Total</span><span>${currency}${order.grandTotal.toFixed(2)}</span></div></section><footer>${escapeHtml(invoiceSettings?.invoiceFooter || "Thank you for visiting!")}</footer><script>window.onload=()=>window.print();<\/script></body></html>`);
+    invoiceWindow.document.write(
+      `<!doctype html><html><head><title>Invoice ${escapeHtml(order.orderNumber)}</title><style>body{font-family:Arial,sans-serif;color:#111;margin:40px;max-width:720px}header{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:18px;margin-bottom:24px}h1,h2,p{margin:0}h1{font-size:24px}h2{font-size:18px;margin-bottom:6px}.muted{color:#555;font-size:13px}.details{display:flex;justify-content:space-between;margin-bottom:24px;gap:24px}.details div{min-width:0}table{width:100%;border-collapse:collapse}th,td{padding:10px 6px;border-bottom:1px solid #ddd;text-align:left}.right{text-align:right}.center{text-align:center}.totals{margin:20px 0 0 auto;width:290px}.totals div{display:flex;justify-content:space-between;padding:5px 0}.grand{font-size:18px;font-weight:bold;border-top:1px solid #111;margin-top:5px;padding-top:9px!important}footer{text-align:center;margin-top:42px;color:#555;font-size:13px}@media print{body{margin:20px}}</style></head><body><header><div><h1>${escapeHtml(businessName)}</h1><p class="muted">${businessDetails.map((detail) => escapeHtml(detail as string)).join("<br>")}</p></div><div class="right"><h2>TAX INVOICE</h2><p class="muted">${escapeHtml(order.orderNumber)}<br>${escapeHtml(formatDate(order.createdAt))}</p></div></header><section class="details"><div><strong>Bill To</strong><p class="muted">${escapeHtml(order.customer?.name || order.customerName || "Walk-in Customer")}<br>${escapeHtml(order.customer?.phone || "")}</p></div><div class="right"><strong>Order</strong><p class="muted">${escapeHtml(order.orderType)}${order.table?.tableNumber ? `<br>Table ${escapeHtml(order.table.tableNumber)}` : ""}<br>Payment: ${escapeHtml(order.paymentStatus)}</p></div></section><table><thead><tr><th>Item</th><th class="center">Qty</th><th class="right">Price</th><th class="right">Total</th></tr></thead><tbody>${items}</tbody></table><section class="totals"><div><span>Subtotal</span><span>${currency}${order.subTotal.toFixed(2)}</span></div>${order.discountAmount > 0 ? `<div><span>Discount</span><span>-${currency}${order.discountAmount.toFixed(2)}</span></div>` : ""}<div><span>GST</span><span>${currency}${order.gstAmount.toFixed(2)}</span></div><div><span>Service charge</span><span>${currency}${order.serviceChargeAmount.toFixed(2)}</span></div><div class="grand"><span>Grand Total</span><span>${currency}${order.grandTotal.toFixed(2)}</span></div></section><footer>${escapeHtml(invoiceSettings?.invoiceFooter || "Thank you for visiting!")}</footer><script>window.onload=()=>window.print();<\/script></body></html>`,
+    );
     invoiceWindow.document.close();
   };
   const getStatusClass = (status: Order["status"]) => {
@@ -83,7 +86,6 @@ const ViewOrderModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-xl">
-
         {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-5">
           <div>
@@ -91,9 +93,7 @@ const ViewOrderModal = ({
               Order Details
             </h2>
 
-            <p className="mt-1 text-sm text-gray-500">
-              {order.orderNumber}
-            </p>
+            <p className="mt-1 text-sm text-gray-500">{order.orderNumber}</p>
           </div>
 
           <button
@@ -106,10 +106,8 @@ const ViewOrderModal = ({
         </div>
 
         <div className="space-y-6 p-6">
-
           {/* Order Information */}
           <div className="grid gap-4 rounded-xl border border-gray-200 p-4 md:grid-cols-2">
-
             <div>
               <p className="text-xs text-gray-500">Order Number</p>
               <p className="mt-1 font-medium text-gray-900">
@@ -153,7 +151,6 @@ const ViewOrderModal = ({
                 {order.table?.tableNumber || "—"}
               </p>
             </div>
-
           </div>
 
           {/* Items */}
@@ -211,15 +208,10 @@ const ViewOrderModal = ({
 
           {/* Billing */}
           <div className="ml-auto max-w-sm space-y-3 rounded-xl border border-gray-200 p-4">
-
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">
-                Subtotal
-              </span>
+              <span className="text-gray-500">Subtotal</span>
 
-              <span className="font-medium">
-                ₹{order.subTotal.toFixed(2)}
-              </span>
+              <span className="font-medium">₹{order.subTotal.toFixed(2)}</span>
             </div>
 
             {order.discountAmount > 0 && (
@@ -239,9 +231,7 @@ const ViewOrderModal = ({
                 GST ({order.gstPercentage}%)
               </span>
 
-              <span className="font-medium">
-                ₹{order.gstAmount.toFixed(2)}
-              </span>
+              <span className="font-medium">₹{order.gstAmount.toFixed(2)}</span>
             </div>
 
             <div className="flex justify-between text-sm">
@@ -256,25 +246,19 @@ const ViewOrderModal = ({
 
             <div className="border-t pt-3">
               <div className="flex justify-between">
-                <span className="font-semibold text-gray-900">
-                  Grand Total
-                </span>
+                <span className="font-semibold text-gray-900">Grand Total</span>
 
                 <span className="text-lg font-bold text-gray-900">
                   ₹{order.grandTotal.toFixed(2)}
                 </span>
               </div>
             </div>
-
           </div>
 
           {/* Status */}
           <div className="grid gap-4 md:grid-cols-2">
-
             <div className="rounded-xl border border-gray-200 p-4">
-              <p className="text-xs text-gray-500">
-                Order Status
-              </p>
+              <p className="text-xs text-gray-500">Order Status</p>
 
               <span
                 className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
@@ -286,9 +270,7 @@ const ViewOrderModal = ({
             </div>
 
             <div className="rounded-xl border border-gray-200 p-4">
-              <p className="text-xs text-gray-500">
-                Payment Status
-              </p>
+              <p className="text-xs text-gray-500">Payment Status</p>
 
               <span
                 className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium ${
@@ -296,18 +278,16 @@ const ViewOrderModal = ({
                     ? "bg-green-100 text-green-700"
                     : order.paymentStatus === "Refund Initiated"
                       ? "bg-red-100 text-red-700"
-                    : "bg-yellow-100 text-yellow-700"
+                      : "bg-yellow-100 text-yellow-700"
                 }`}
               >
                 {order.paymentStatus}
               </span>
             </div>
-
           </div>
 
           {/* Actions */}
           <div className="flex justify-end gap-3 border-t pt-5">
-
             <button
               type="button"
               onClick={printInvoice}
@@ -323,24 +303,24 @@ const ViewOrderModal = ({
                 onClick={() => onMarkAsPaid(order._id)}
                 className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {paymentLoading
-                  ? "Processing..."
-                  : "Mark as Paid"}
+                {paymentLoading ? "Processing..." : "Mark as Paid"}
               </button>
             )}
 
-            {canMarkAsServed &&
-              order.orderType === "Dine In" &&
-              order.status === "Ready" && (
-                <button
-                  type="button"
-                  disabled={servingLoading}
-                  onClick={() => onMarkAsServed(order._id)}
-                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {servingLoading ? "Updating..." : "Mark as Served"}
-                </button>
-              )}
+            {canMarkAsServed && order.status === "Ready" && (
+              <button
+                type="button"
+                disabled={servingLoading}
+                onClick={() => onMarkAsServed(order._id)}
+                className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {servingLoading
+                  ? "Updating..."
+                  : order.orderType === "Takeaway"
+                    ? "Mark as Collected"
+                    : "Mark as Served"}
+              </button>
+            )}
 
             {canCancelOrder &&
               order.status !== "Cancelled" &&
@@ -361,9 +341,7 @@ const ViewOrderModal = ({
             >
               Close
             </button>
-
           </div>
-
         </div>
       </div>
     </div>
