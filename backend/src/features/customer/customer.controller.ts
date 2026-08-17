@@ -53,14 +53,25 @@ export const getAllActiveCustomersController = async (
   next: NextFunction,
 ) => {
   try {
-    const customers = await getAllActiveCustomersService(
-      req.query.search as string | undefined,
+    const search =
+      typeof req.query.search === "string"
+        ? req.query.search
+        : undefined;
+
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const result = await getAllActiveCustomersService(
+      search,
+      page,
+      limit,
     );
 
     res.status(200).json({
       status: "success",
       message: "Active customers retrieved successfully",
-      data: customers,
+      data: result.customers,
+      pagination: result.pagination,
     });
   } catch (error) {
     next(error);

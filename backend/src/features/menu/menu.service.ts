@@ -25,11 +25,32 @@ export const createMenuService = async (payload: MenuType) => {
   return menu;
 };
 
-export const getAllMenuActiveService = async () => {
-  return await Menu.find({ isActive: true })
-    .sort({ createdAt: -1 })
-    .populate("inventory")
-    .populate("category");
+export const getAllMenuActiveService = async (
+  page = 1,
+  limit = 10,
+) => {
+  const skip = (page - 1) * limit;
+
+  const [menu, total] = await Promise.all([
+    Menu.find({ isActive: true })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("inventory")
+      .populate("category"),
+
+    Menu.countDocuments({ isActive: true }),
+  ]);
+
+  return {
+    menu,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 export const getAllMenuService = async () => {

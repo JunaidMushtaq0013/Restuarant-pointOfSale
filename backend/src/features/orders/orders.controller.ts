@@ -20,15 +20,19 @@ export const createOrderController = async (req: Request, res: Response, next: N
 export const getAllOrdersController = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
-    const orders = await getAllOrdersService();
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const result = await getAllOrdersService(page, limit);
 
     res.status(200).json({
       status: "success",
       message: "Orders retrieved successfully",
-      data: orders,
+      data: result.orders,
+      pagination: result.pagination,
     });
   } catch (error) {
     next(error);

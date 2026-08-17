@@ -12,6 +12,7 @@ import {
 
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
+import upload from "../../middleware/upload.js";
 
 const router = Router();
 
@@ -19,6 +20,7 @@ router.post(
   "/",
   authenticate,
   authorize("Manager"),
+  upload.single("image"),
   createMenuController,
 );
 
@@ -47,6 +49,7 @@ router.patch(
   "/:id",
   authenticate,
   authorize("Manager"),
+  upload.single("image"),
   updateMenuController,
 );
 

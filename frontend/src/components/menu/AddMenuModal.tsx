@@ -28,6 +28,7 @@ interface AddMenuModalProps {
     inventory: string,
     sellingPrice: number,
     type: "Veg" | "Non-Veg",
+    image: File | null,
   ) => void;
   submitting: boolean;
 }
@@ -43,6 +44,7 @@ const AddMenuModal = ({
   const [category, setCategory] = useState("");
   const [inventory, setInventory] = useState("");
   const [sellingPrice, setSellingPrice] = useState("");
+  const [image, setImage] = useState<File | null>(null);
   const [type, setType] = useState<"Veg" | "Non-Veg">("Veg");
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -112,6 +114,7 @@ const AddMenuModal = ({
       inventory,
       Number(sellingPrice),
       type,
+      image,
     );
   };
 
@@ -168,6 +171,26 @@ const AddMenuModal = ({
               rows={3}
               className="w-full resize-none rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
             />
+          </div>
+
+          {/* Image */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Menu Image
+            </label>
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                setImage(e.target.files?.[0] || null);
+              }}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm"
+            />
+
+            <p className="mt-1 text-xs text-gray-500">
+              Optional. Maximum size: 5 MB.
+            </p>
           </div>
 
           {/* Category */}

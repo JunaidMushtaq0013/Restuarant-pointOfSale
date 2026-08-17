@@ -2,7 +2,7 @@ import { Types } from "mongoose";
 import { InventoryType } from "../inventory/inventory.types.js";
 export interface MenuType {
   _id: Types.ObjectId;
-  
+
   name: string;
 
   inventory: Types.ObjectId;
@@ -13,10 +13,10 @@ export interface MenuType {
 
   type: "Veg" | "Non-Veg";
 
+  image?: string;
+
   isActive: boolean;
 }
-
-
 
 export interface PopulatedMenuType
   extends Omit<MenuType, "inventory"> {

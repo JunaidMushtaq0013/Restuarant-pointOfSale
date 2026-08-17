@@ -273,14 +273,34 @@ export const createOrderService = async (
   }
 };
 
-export const getAllOrdersService = async () => {
-  return await Order.find()
-    .sort({ createdAt: -1 })
-    .populate("customer", "name phone")
-    .populate("items.menu", "name sellingPrice type")
-    .populate("table", "tableNumber capacity status");
-};
+export const getAllOrdersService = async (
+  page = 1,
+  limit = 10,
+) => {
+  const skip = (page - 1) * limit;
 
+  const [orders, totalOrders] = await Promise.all([
+    Order.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate("customer", "name phone")
+      .populate("items.menu", "name sellingPrice type")
+      .populate("table", "tableNumber capacity status"),
+
+    Order.countDocuments(),
+  ]);
+
+  return {
+    orders,
+    pagination: {
+      currentPage: page,
+      totalPages: Math.ceil(totalOrders / limit),
+      totalItems: totalOrders,
+      limit,
+    },
+  };
+};
 export const getOrderByIdService = async (id: string) => {
   return await Order.findById(id)
     .populate("customer", "name phone")

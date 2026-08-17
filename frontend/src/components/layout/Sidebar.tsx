@@ -1,7 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const Sidebar = () => {
+interface SidebarProps {
+  onNavigate?: () => void;
+}
+
+const Sidebar = ({ onNavigate }: SidebarProps) => {
   const { user } = useAuth();
 
   const navItems = [
@@ -66,9 +70,7 @@ const Sidebar = () => {
     <aside className="fixed left-0 top-0 flex h-screen w-64 flex-col overflow-hidden bg-slate-900 text-white">
       {/* Header */}
       <div className="shrink-0 border-b border-slate-800 px-6 py-5">
-        <h1 className="text-xl font-bold">
-          Warisoft POS
-        </h1>
+        <h1 className="text-xl font-bold">Warisoft POS</h1>
 
         <p className="mt-1 text-xs text-slate-400">
           Restaurant Management
@@ -78,13 +80,12 @@ const Sidebar = () => {
       {/* Navigation */}
       <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-5">
         {navItems
-          .filter((item) =>
-            item.roles.includes(user?.role ?? ""),
-          )
+          .filter((item) => item.roles.includes(user?.role ?? ""))
           .map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={onNavigate}
               className={({ isActive }) =>
                 `block rounded-lg px-4 py-3 text-sm font-medium transition ${
                   isActive

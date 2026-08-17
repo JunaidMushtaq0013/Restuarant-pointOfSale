@@ -28,6 +28,7 @@ interface MenuItem {
   category: Category;
   sellingPrice: number;
   type: "Veg" | "Non-Veg";
+  image?: string;
   isActive: boolean;
 }
 
@@ -330,7 +331,9 @@ const NewOrder = () => {
       );
     } catch (error) {
       console.error("Failed to create order:", error);
-      toast.error("Failed to create order. Please check the table and stock, then try again.");
+      toast.error(
+        "Failed to create order. Please check the table and stock, then try again.",
+      );
     } finally {
       setPlacingOrder(false);
     }
@@ -397,9 +400,19 @@ const NewOrder = () => {
                   onClick={() => addToCart(item)}
                   className="rounded-xl border border-gray-200 bg-white p-3 text-left shadow-sm transition hover:border-gray-400 hover:shadow-md"
                 >
-                  {/* Image placeholder */}
-                  <div className="flex h-32 items-center justify-center rounded-lg bg-gray-100">
-                    <span className="text-4xl">🍽️</span>
+                  {/* Menu Image */}
+                  <div className="h-32 overflow-hidden rounded-lg bg-gray-100">
+                    {item.image ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <span className="text-4xl">🍽️</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Name */}
@@ -451,7 +464,8 @@ const NewOrder = () => {
           <div className="mb-5">
             <div className="mb-2 flex items-center justify-between gap-3">
               <p className="text-sm font-medium text-gray-700">
-                Customer <span className="font-normal text-gray-400">(optional)</span>
+                Customer{" "}
+                <span className="font-normal text-gray-400">(optional)</span>
               </p>
               {matchedCustomer && (
                 <span className="text-xs font-medium text-green-700">
@@ -492,7 +506,8 @@ const NewOrder = () => {
 
             {customerPhone && !matchedCustomer && !customerLookupLoading && (
               <p className="mt-2 text-xs text-gray-500">
-                New customer? Enter their name and it will be saved with this order.
+                New customer? Enter their name and it will be saved with this
+                order.
               </p>
             )}
           </div>
@@ -647,7 +662,9 @@ const NewOrder = () => {
           </div>
 
           <div className="mt-2 flex justify-between text-sm">
-            <span className="text-gray-500">GST ({orderSettings.gstPercentage}%)</span>
+            <span className="text-gray-500">
+              GST ({orderSettings.gstPercentage}%)
+            </span>
 
             <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
           </div>
@@ -657,7 +674,9 @@ const NewOrder = () => {
               Service Charge ({orderSettings.serviceChargePercentage}%)
             </span>
 
-            <span className="font-medium">₹{serviceChargeAmount.toFixed(2)}</span>
+            <span className="font-medium">
+              ₹{serviceChargeAmount.toFixed(2)}
+            </span>
           </div>
 
           <div className="mt-4 flex justify-between border-t pt-4">

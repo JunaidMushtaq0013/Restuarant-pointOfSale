@@ -20,18 +20,26 @@ export const createInventory = async(req: Request, res: Response, next: NextFunc
 
 
 
-export const getAllInventory = async(req: Request, res: Response, next: NextFunction) => {
-    try{
-        const inventory = await getAllInventoryService();
-        res.status(200).json({
-            status: "success",
-            message: "Inventory retrieved successfully",
-            data: inventory
-        });
-    }
-    catch(error){
-        next(error);
-    }   
+export const getAllInventory = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+
+    const result = await getAllInventoryService(page, limit);
+
+    res.status(200).json({
+      status: "success",
+      message: "Inventory retrieved successfully",
+      data: result.inventory,
+      pagination: result.pagination,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 export const getInactiveInventory = async (
   req: Request,

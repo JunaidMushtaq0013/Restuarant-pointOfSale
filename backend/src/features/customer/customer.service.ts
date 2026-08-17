@@ -13,6 +13,8 @@ export const getAllCustomersService = async () => {
 
 export const getAllActiveCustomersService = async (
   search?: string,
+  page: number = 1,
+  limit: number = 10,
 ) => {
   const filter: any = {
     isActive: true,
@@ -35,9 +37,28 @@ export const getAllActiveCustomersService = async (
     ];
   }
 
-  return await Customer.find(filter).sort({
-    createdAt: -1,
-  });
+  const skip = (page - 1) * limit;
+
+  const [customers, total] = await Promise.all([
+    Customer.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+
+    Customer.countDocuments(filter),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    customers,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalItems: total,
+      itemsPerPage: limit,
+    },
+  };
 };
 
 export const getCustomerByIdService = async (id: string) => {

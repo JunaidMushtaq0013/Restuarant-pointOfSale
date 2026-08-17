@@ -22,6 +22,7 @@ interface MenuItem {
   _id: string;
   name: string;
   description?: string;
+  image?: string;
   inventory: InventoryItem;
   category: Category;
   sellingPrice: number;
@@ -41,6 +42,7 @@ interface EditMenuModalProps {
     inventory: string,
     sellingPrice: number,
     type: "Veg" | "Non-Veg",
+    image: File | null,
   ) => void;
   submitting: boolean;
 }
@@ -58,6 +60,7 @@ const EditMenuModal = ({
   const [inventory, setInventory] = useState("");
   const [sellingPrice, setSellingPrice] = useState("");
   const [type, setType] = useState<"Veg" | "Non-Veg">("Veg");
+  const [image, setImage] = useState<File | null>(null);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
@@ -75,6 +78,7 @@ const EditMenuModal = ({
     setInventory(menuItem.inventory?._id || "");
     setSellingPrice(String(menuItem.sellingPrice));
     setType(menuItem.type);
+    setImage(null);
 
     const getFormData = async () => {
       try {
@@ -127,14 +131,15 @@ const EditMenuModal = ({
     }
 
     onSubmit(
-      menuItem._id,
-      name.trim(),
-      description.trim(),
-      category,
-      inventory,
-      Number(sellingPrice),
-      type,
-    );
+  menuItem._id,
+  name.trim(),
+  description.trim(),
+  category,
+  inventory,
+  Number(sellingPrice),
+  type,
+  image,
+);
   };
 
   return (
@@ -191,6 +196,36 @@ const EditMenuModal = ({
               rows={3}
               className="w-full resize-none rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
             />
+          </div>
+
+          {/* Image */}
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Menu Image
+            </label>
+
+            {menuItem.image && !image && (
+              <div className="mb-3 overflow-hidden rounded-lg">
+                <img
+                  src={menuItem.image}
+                  alt={menuItem.name}
+                  className="h-32 w-full object-cover"
+                />
+              </div>
+            )}
+
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                setImage(e.target.files?.[0] || null);
+              }}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm"
+            />
+
+            <p className="mt-1 text-xs text-gray-500">
+              Leave empty to keep the existing image.
+            </p>
           </div>
 
           {/* Category */}

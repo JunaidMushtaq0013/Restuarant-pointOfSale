@@ -1,42 +1,53 @@
-import {model, Schema} from "mongoose";
+import { model, Schema } from "mongoose";
 import { MenuType } from "./menu.types.js";
 
+const menuSchema = new Schema<MenuType>(
+  {
+    name: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
 
-const menuSchema =new Schema<MenuType>({
+    inventory: {
+      type: Schema.Types.ObjectId,
+      ref: "Inventory",
+      required: true,
+    },
 
-    name:{
-        type:String,
-        required:true,
-        unique:true,
-        trim:true,
+    category: {
+      type: Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
     },
-    inventory:{
-        type:Schema.Types.ObjectId,
-        ref:"Inventory",
-        required:true
+
+    sellingPrice: {
+      type: Number,
+      required: true,
+      min: 0,
     },
-    category:{
-        type:Schema.Types.ObjectId,
-        ref:"Category",
-        required:true
+
+    type: {
+      type: String,
+      enum: ["Veg", "Non-Veg"],
+      trim: true,
+      required: true,
     },
-    sellingPrice:{
-        type:Number,
-        required:true,
-        min:0
+
+    image: {
+      type: String,
+      trim: true,
     },
-    type:{
-        type:String,
-        enum:["Veg","Non-Veg"],
-        trim:true,
-        required:true
+
+    isActive: {
+      type: Boolean,
+      default: true,
     },
-    isActive:{
-        type:Boolean,
-        default:true
-    }
-}, {
-    timestamps:true
-});
+  },
+  {
+    timestamps: true,
+  },
+);
 
 export const Menu = model<MenuType>("Menu", menuSchema);
