@@ -9,6 +9,9 @@ export const authenticate = async (
 ) => {
   const token = req.cookies.token;
 
+
+console.log("AUTH COOKIE EXISTS:", !!token);
+
   if (!token) {
     return res.status(401).json({
       success: false,
@@ -19,9 +22,7 @@ export const authenticate = async (
   const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtUser;
 
   req.user = decoded;
-  const token = req.cookies.token;
 
-console.log("AUTH COOKIE EXISTS:", !!token);
 
   next();
 };
