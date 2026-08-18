@@ -19,7 +19,7 @@ const Login = () => {
         password,
       });
 
-      login(response.data.data.employee);
+      login(response.data.data);
       toast.success(response.data.message);
       navigate("/dashboard", { replace: true });
     } catch (error: any) {

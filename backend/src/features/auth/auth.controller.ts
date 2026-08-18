@@ -18,13 +18,14 @@ export const loginController = async (
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json({
-      status: "success",
-      message: "Login successful.",
-      data: {
-        employee: result.employee,
-      },
-    });
+ res.status(200).json({
+  status: "success",
+  message: "Login successful.",
+  data: {
+    employee: result.employee,
+    token: result.token,
+  },
+});
   } catch (error) {
     next(error);
   }
