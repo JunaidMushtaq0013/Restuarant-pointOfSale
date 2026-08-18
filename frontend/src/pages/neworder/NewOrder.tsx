@@ -348,7 +348,7 @@ const NewOrder = () => {
   }
 
   return (
-    <div className="flex h-[calc(100vh-2rem)] gap-4 overflow-hidden">
+   <div className="flex min-h-[calc(100vh-2rem)] flex-col gap-4 overflow-hidden lg:h-[calc(100vh-2rem)] lg:flex-row">
       {/* LEFT - MENU */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}
@@ -445,7 +445,7 @@ const NewOrder = () => {
               ))}
             </div>
           ) : (
-            <div className="flex min-h-[300px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white">
+            <div className="flex min-h-0 w-full flex-col overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-sm lg:w-[360px]">
               <p className="text-sm text-gray-500">No menu items found.</p>
             </div>
           )}
@@ -551,7 +551,7 @@ const NewOrder = () => {
                 value={selectedTable}
                 onChange={(event) => setSelectedTable(event.target.value)}
                 disabled={tablesLoading}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100"
+                className="min-w-0 w-full max-w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100"
               >
                 <option value="">
                   {tablesLoading ? "Loading tables..." : "Select a table"}

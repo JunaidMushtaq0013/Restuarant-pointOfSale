@@ -130,73 +130,121 @@ const Customers = () => {
     );
   }
 
-  return (
-    <div className="p-4 sm:p-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
+ return (
+  <div className="p-4 sm:p-6">
+    {/* Header */}
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Manage restaurant customers
-          </p>
-        </div>
+        <p className="mt-1 text-sm text-gray-500">
+          Manage restaurant customers
+        </p>
+      </div>
 
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 sm:w-auto"
+      >
+        + Add Customer
+      </button>
+    </div>
+
+    {/* Search */}
+    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+      <input
+        type="text"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            handleSearch();
+          }
+        }}
+        placeholder="Search by name or phone..."
+        className="w-full flex-1 rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+      />
+
+      <div className="flex gap-3">
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 sm:w-auto"
+          onClick={handleSearch}
+          className="flex-1 rounded-lg bg-gray-900 px-5 py-3 text-sm font-medium text-white hover:bg-gray-800 sm:flex-none"
         >
-          + Add Customer
+          Search
         </button>
-      </div>
 
-      {/* Search */}
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSearch();
-            }
-          }}
-          placeholder="Search by name or phone..."
-          className="w-full flex-1 rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
-        />
-
-        <div className="flex gap-3">
+        {search && (
           <button
-            onClick={handleSearch}
-            className="flex-1 rounded-lg bg-gray-900 px-5 py-3 text-sm font-medium text-white hover:bg-gray-800 sm:flex-none"
+            onClick={handleClear}
+            className="flex-1 rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:flex-none"
           >
-            Search
+            Clear
           </button>
+        )}
+      </div>
+    </div>
 
-          {search && (
-            <button
-              onClick={handleClear}
-              className="flex-1 rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:flex-none"
+    {/* Customers */}
+    <div className="mt-6 overflow-hidden rounded-xl bg-white shadow-sm">
+      {/* ================= MOBILE CARDS ================= */}
+      <div className="space-y-3 p-3 sm:hidden">
+        {customers.length > 0 ? (
+          customers.map((customer) => (
+            <div
+              key={customer._id}
+              className="rounded-xl border border-gray-200 bg-white p-4"
             >
-              Clear
-            </button>
-          )}
-        </div>
+              {/* Customer Info */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="truncate text-base font-semibold text-gray-900">
+                    {customer.name}
+                  </h3>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    {customer.phone}
+                  </p>
+                </div>
+
+                <span className="shrink-0 rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                  Active
+                </span>
+              </div>
+
+              {/* Action */}
+              <div className="mt-4 border-t border-gray-100 pt-3">
+                <button
+                  onClick={() => {
+                    setSelectedCustomer(customer);
+                    getCustomerOrders(customer._id);
+                  }}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  View Customer
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="py-10 text-center text-sm text-gray-500">
+            No customers found.
+          </div>
+        )}
       </div>
 
-      {/* Customer Table */}
-      <div className="mt-6 overflow-hidden rounded-xl bg-white shadow-sm">
+      {/* ================= DESKTOP TABLE ================= */}
+      <div className="hidden sm:block">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[650px] text-left text-sm">
+          <table className="w-full text-left text-sm">
             <thead className="border-b bg-gray-50 text-gray-600">
               <tr>
-                <th className="px-4 py-4 font-medium sm:px-6">Name</th>
+                <th className="px-6 py-4 font-medium">Name</th>
 
-                <th className="px-4 py-4 font-medium sm:px-6">Phone</th>
+                <th className="px-6 py-4 font-medium">Phone</th>
 
-                <th className="px-4 py-4 font-medium sm:px-6">Status</th>
+                <th className="px-6 py-4 font-medium">Status</th>
 
-                <th className="px-4 py-4 font-medium sm:px-6">Actions</th>
+                <th className="px-6 py-4 font-medium">Actions</th>
               </tr>
             </thead>
 
@@ -207,21 +255,21 @@ const Customers = () => {
                     key={customer._id}
                     className="hover:bg-gray-50"
                   >
-                    <td className="px-4 py-4 font-medium text-gray-900 sm:px-6">
+                    <td className="px-6 py-4 font-medium text-gray-900">
                       {customer.name}
                     </td>
 
-                    <td className="px-4 py-4 text-gray-600 sm:px-6">
+                    <td className="px-6 py-4 text-gray-600">
                       {customer.phone}
                     </td>
 
-                    <td className="px-4 py-4 sm:px-6">
+                    <td className="px-6 py-4">
                       <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
                         Active
                       </span>
                     </td>
 
-                    <td className="px-4 py-4 sm:px-6">
+                    <td className="px-6 py-4">
                       <button
                         onClick={() => {
                           setSelectedCustomer(customer);
@@ -247,61 +295,62 @@ const Customers = () => {
             </tbody>
           </table>
         </div>
-
-        {/* Pagination */}
-        {pagination.totalPages > 1 && (
-          <div className="flex flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-            <p className="text-sm text-gray-500">
-              Page {pagination.currentPage} of{" "}
-              {pagination.totalPages} ({pagination.totalItems} customers)
-            </p>
-
-            <div className="flex items-center justify-center gap-2">
-              <button
-                onClick={() => goToPage(page - 1)}
-                disabled={page === 1}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Previous
-              </button>
-
-              <span className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white">
-                {page}
-              </span>
-
-              <button
-                onClick={() => goToPage(page + 1)}
-                disabled={page === pagination.totalPages}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Add Customer Modal */}
-      <AddCustomerModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={createCustomer}
-        submitting={submitting}
-      />
+      {/* ================= PAGINATION ================= */}
+      {pagination.totalPages > 1 && (
+        <div className="flex flex-col gap-3 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-sm text-gray-500">
+            Page {pagination.currentPage} of{" "}
+            {pagination.totalPages} ({pagination.totalItems} customers)
+          </p>
 
-      {/* Customer Details Modal */}
-      <CustomerDetailsModal
-        isOpen={selectedCustomer !== null}
-        customer={selectedCustomer}
-        orders={customerOrders}
-        loading={loadingOrders}
-        onClose={() => {
-          setSelectedCustomer(null);
-          setCustomerOrders([]);
-        }}
-      />
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page === 1}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Previous
+            </button>
+
+            <span className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white">
+              {page}
+            </span>
+
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page === pagination.totalPages}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
-  );
+
+    {/* Add Customer Modal */}
+    <AddCustomerModal
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      onSubmit={createCustomer}
+      submitting={submitting}
+    />
+
+    {/* Customer Details Modal */}
+    <CustomerDetailsModal
+      isOpen={selectedCustomer !== null}
+      customer={selectedCustomer}
+      orders={customerOrders}
+      loading={loadingOrders}
+      onClose={() => {
+        setSelectedCustomer(null);
+        setCustomerOrders([]);
+      }}
+    />
+  </div>
+);
 };
 
 export default Customers;

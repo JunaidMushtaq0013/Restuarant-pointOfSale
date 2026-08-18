@@ -46,7 +46,10 @@ export interface Order {
 
   grandTotal: number;
 
-  paymentStatus: "Pending" | "Paid" | "Refund Initiated";
+  paymentStatus:
+    | "Pending"
+    | "Paid"
+    | "Refund Initiated";
 
   status:
     | "Pending"
@@ -70,6 +73,21 @@ export interface InvoiceSettings {
   invoiceFooter: string;
 }
 
+type OrderStatus =
+  | ""
+  | "Pending"
+  | "Preparing"
+  | "Ready"
+  | "Served"
+  | "Cancelled";
+
+interface Pagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  limit: number;
+}
+
 const Orders = () => {
   const { user } = useAuth();
 
@@ -87,17 +105,26 @@ const Orders = () => {
   const [search, setSearch] = useState("");
 
   // =========================
+  // Status Filter
+  // =========================
+
+  const [statusFilter, setStatusFilter] =
+    useState<OrderStatus>("");
+
+  // =========================
   // Pagination
   // =========================
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-
-  const itemsPerPage = 10;
+  const [pagination, setPagination] =
+    useState<Pagination>({
+      currentPage: 1,
+      totalPages: 1,
+      totalItems: 0,
+      limit: 10,
+    });
 
   // =========================
-  // View Order
+  // View Order Modal
   // =========================
 
   const [selectedOrder, setSelectedOrder] =
@@ -131,7 +158,7 @@ const Orders = () => {
     useState(false);
 
   // =========================
-  // Invoice
+  // Invoice Settings
   // =========================
 
   const [invoiceSettings, setInvoiceSettings] =
@@ -141,41 +168,117 @@ const Orders = () => {
   // Get Orders
   // =========================
 
-  const getOrders = async (page: number = 1) => {
+  const getOrders = async (
+    page: number = 1,
+    status: OrderStatus = statusFilter,
+  ) => {
     try {
       setLoading(true);
 
       const response = await api.get("/orders", {
         params: {
           page,
-          limit: itemsPerPage,
+          limit: 10,
+          status: status || undefined,
         },
       });
 
       setOrders(response.data.data);
 
-      setCurrentPage(
-        response.data.pagination.currentPage,
-      );
-
-      setTotalPages(
-        response.data.pagination.totalPages,
-      );
-
-      setTotalItems(
-        response.data.pagination.totalItems,
-      );
+      setPagination(response.data.pagination);
     } catch (error) {
-      console.error("Failed to load orders:", error);
+      console.error(
+        "Failed to load orders:",
+        error,
+      );
+
       toast.error("Failed to load orders.");
     } finally {
       setLoading(false);
     }
   };
 
+  // =========================
+  // Initial Load
+  // =========================
+
   useEffect(() => {
-    getOrders(1);
+    getOrders(1, "");
   }, []);
+
+  // =========================
+  // Search
+  // =========================
+
+  const handleSearch = () => {
+    // Search is currently frontend-side
+    // for the orders loaded from the API.
+    //
+    // Status filtering is backend-side.
+    setPagination((prev) => ({
+      ...prev,
+      currentPage: 1,
+    }));
+  };
+
+  // =========================
+  // Status Filter
+  // =========================
+
+  const handleStatusFilter = (
+    status: OrderStatus,
+  ) => {
+    setStatusFilter(status);
+
+    // Always start from page 1
+    // when changing the filter.
+    getOrders(1, status);
+  };
+
+  // =========================
+  // Pagination
+  // =========================
+
+  const goToPage = (newPage: number) => {
+    if (
+      newPage < 1 ||
+      newPage > pagination.totalPages
+    ) {
+      return;
+    }
+
+    getOrders(newPage, statusFilter);
+  };
+
+  // =========================
+  // Search Current Page
+  // =========================
+
+  const filteredOrders = orders.filter(
+    (order) => {
+      const searchValue =
+        search.trim().toLowerCase();
+
+      if (!searchValue) {
+        return true;
+      }
+
+      return (
+        order.orderNumber
+          ?.toLowerCase()
+          .includes(searchValue) ||
+        order.customer?.name
+          ?.toLowerCase()
+          .includes(searchValue) ||
+        order.customer?.phone?.includes(
+          searchValue,
+        ) ||
+        order.customerName
+          ?.toLowerCase()
+          .includes(searchValue)
+      );
+    },
+  );
 
   // =========================
   // View Order
@@ -183,24 +286,27 @@ const Orders = () => {
 
   const viewOrder = async (id: string) => {
     try {
-      const response = await api.get(`/orders/${id}`);
+      const response = await api.get(
+        `/orders/${id}`,
+      );
 
       setSelectedOrder(response.data.data);
+
       setIsViewModalOpen(true);
 
-      api
-        .get("/settings")
-        .then((settingsResponse) =>
-          setInvoiceSettings(
-            settingsResponse.data.data,
-          ),
-        )
-        .catch((settingsError) =>
-          console.error(
-            "Failed to load invoice settings:",
-            settingsError,
-          ),
+      try {
+        const settingsResponse =
+          await api.get("/settings");
+
+        setInvoiceSettings(
+          settingsResponse.data.data,
         );
+      } catch (settingsError) {
+        console.error(
+          "Failed to load invoice settings:",
+          settingsError,
+        );
+      }
     } catch (error) {
       console.error(
         "Failed to load order:",
@@ -218,7 +324,9 @@ const Orders = () => {
   // =========================
 
   const cancelOrder = async () => {
-    if (!orderToCancel) return;
+    if (!orderToCancel) {
+      return;
+    }
 
     try {
       setCancellingOrder(true);
@@ -239,6 +347,7 @@ const Orders = () => {
       );
 
       setSelectedOrder(updatedOrder);
+
       setOrderToCancel(null);
 
       toast.success(
@@ -352,43 +461,7 @@ const Orders = () => {
   };
 
   // =========================
-  // Search
-  // =========================
-
-  const filteredOrders = orders.filter(
-    (order) => {
-      const searchValue =
-        search.toLowerCase().trim();
-
-      if (!searchValue) {
-        return true;
-      }
-
-      return (
-        order.orderNumber
-          .toLowerCase()
-          .includes(searchValue) ||
-        order.customerName
-          ?.toLowerCase()
-          .includes(searchValue) ||
-        order.customer?.name
-          ?.toLowerCase()
-          .includes(searchValue) ||
-        order.customer?.phone?.includes(
-          searchValue,
-        ) ||
-        order.status
-          .toLowerCase()
-          .includes(searchValue) ||
-        order.paymentStatus
-          .toLowerCase()
-          .includes(searchValue)
-      );
-    },
-  );
-
-  // =========================
-  // Status Styling
+  // Status Classes
   // =========================
 
   const getStatusClass = (
@@ -430,7 +503,7 @@ const Orders = () => {
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center px-4">
-        <p className="text-gray-500">
+        <p className="text-sm text-gray-500">
           Loading orders...
         </p>
       </div>
@@ -438,467 +511,574 @@ const Orders = () => {
   }
 
   // =========================
-  // JSX
+  // RETURN
   // =========================
 
-return (
-  <div className="w-full space-y-6">
-    {/* Header */}
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          Orders
-        </h1>
+  return (
+    <div className="w-full space-y-6 p-4 sm:p-6">
+      {/* =========================
+          HEADER
+      ========================= */}
 
-        <p className="mt-1 text-sm text-gray-500">
-          View and manage restaurant orders
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Orders
+          </h1>
+
+          <p className="mt-1 text-sm text-gray-500">
+            View and manage restaurant orders
+          </p>
+        </div>
+
+        <div className="text-sm text-gray-500">
+          Total Orders:{" "}
+          <span className="font-semibold text-gray-900">
+            {pagination.totalItems}
+          </span>
+        </div>
       </div>
 
-      <div className="text-sm text-gray-500">
-        Total Orders:{" "}
-        <span className="font-semibold text-gray-900">
-          {totalItems}
-        </span>
-      </div>
-    </div>
+      {/* =========================
+          SEARCH
+      ========================= */}
 
-    {/* Search */}
-    <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <input
-          type="text"
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search by order number, customer, phone, status..."
-          className="min-w-0 flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
-        />
+      <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input
+            type="text"
+            value={search}
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                handleSearch();
+              }
+            }}
+            placeholder="Search by order number, customer, phone..."
+            className="min-w-0 flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+          />
 
-        {search && (
           <button
             type="button"
-            onClick={() => setSearch("")}
-            className="rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            onClick={handleSearch}
+            className="w-full rounded-lg bg-gray-900 px-5 py-3 text-sm font-medium text-white hover:bg-gray-800 sm:w-auto"
           >
-            Clear
+            Search
           </button>
-        )}
+
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="w-full rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 sm:w-auto"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
-    </div>
 
-    {/* =====================================================
-        DESKTOP TABLE
-    ====================================================== */}
+      {/* =========================
+          STATUS FILTER
+      ========================= */}
 
-    <div className="hidden rounded-xl border border-gray-100 bg-white shadow-sm md:block">
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b bg-gray-50">
-            <tr>
-              <th className="px-6 py-4 font-medium text-gray-600">
-                Order #
-              </th>
+        <div className="flex min-w-max gap-2 rounded-xl border border-gray-100 bg-white p-2 shadow-sm">
+          {[
+            "",
+            "Pending",
+            "Preparing",
+            "Ready",
+            "Served",
+            "Cancelled",
+          ].map((status) => (
+            <button
+              key={status || "All"}
+              type="button"
+              onClick={() =>
+                handleStatusFilter(
+                  status as OrderStatus,
+                )
+              }
+              className={`rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                statusFilter === status
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {status || "All"}
+            </button>
+          ))}
+        </div>
+      </div>
 
-              <th className="px-6 py-4 font-medium text-gray-600">
-                Customer
-              </th>
+      {/* =========================
+          DESKTOP TABLE
+      ========================= */}
 
-              <th className="px-6 py-4 font-medium text-gray-600">
-                Type
-              </th>
+      <div className="hidden overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm md:block">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b bg-gray-50">
+              <tr>
+                <th className="px-6 py-4 font-medium text-gray-600">
+                  Order #
+                </th>
 
-              <th className="px-6 py-4 font-medium text-gray-600">
-                Table
-              </th>
+                <th className="px-6 py-4 font-medium text-gray-600">
+                  Customer
+                </th>
 
-              <th className="px-6 py-4 font-medium text-gray-600">
-                Total
-              </th>
+                <th className="px-6 py-4 font-medium text-gray-600">
+                  Type
+                </th>
 
-              <th className="px-6 py-4 font-medium text-gray-600">
-                Status
-              </th>
+                <th className="px-6 py-4 font-medium text-gray-600">
+                  Table
+                </th>
 
-              <th className="px-6 py-4 font-medium text-gray-600">
-                Payment
-              </th>
+                <th className="px-6 py-4 font-medium text-gray-600">
+                  Total
+                </th>
 
-              <th className="px-6 py-4 font-medium text-gray-600">
-                Date
-              </th>
+                <th className="px-6 py-4 font-medium text-gray-600">
+                  Status
+                </th>
 
-              <th className="px-6 py-4 text-right font-medium text-gray-600">
-                Actions
-              </th>
-            </tr>
-          </thead>
+                <th className="px-6 py-4 font-medium text-gray-600">
+                  Payment
+                </th>
 
-          <tbody className="divide-y">
-            {filteredOrders.length > 0 ? (
-              filteredOrders.map((order) => (
-                <tr
-                  key={order._id}
-                  className="transition hover:bg-gray-50"
-                >
-                  {/* Order */}
-                  <td className="px-6 py-4 font-medium text-gray-900">
-                    {order.orderNumber}
-                  </td>
+                <th className="px-6 py-4 font-medium text-gray-600">
+                  Date
+                </th>
 
-                  {/* Customer */}
-                  <td className="px-6 py-4 text-gray-700">
-                    <div className="max-w-[180px] truncate">
-                      {order.customer?.name ||
-                        order.customerName ||
-                        "Walk-in Customer"}
-                    </div>
+                <th className="px-6 py-4 text-right font-medium text-gray-600">
+                  Actions
+                </th>
+              </tr>
+            </thead>
 
-                    {order.customer?.phone && (
-                      <div className="mt-1 text-xs text-gray-400">
-                        {order.customer.phone}
+            <tbody className="divide-y">
+              {filteredOrders.length > 0 ? (
+                filteredOrders.map((order) => (
+                  <tr
+                    key={order._id}
+                    className="hover:bg-gray-50"
+                  >
+                    {/* Order Number */}
+
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      {order.orderNumber}
+                    </td>
+
+                    {/* Customer */}
+
+                    <td className="px-6 py-4 text-gray-700">
+                      <div className="max-w-[180px] truncate">
+                        {order.customer?.name ||
+                          order.customerName ||
+                          "Walk-in Customer"}
                       </div>
-                    )}
-                  </td>
 
-                  {/* Type */}
-                  <td className="px-6 py-4 text-gray-600">
-                    {order.orderType}
-                  </td>
+                      {order.customer?.phone && (
+                        <div className="mt-1 text-xs text-gray-400">
+                          {order.customer.phone}
+                        </div>
+                      )}
+                    </td>
 
-                  {/* Table */}
-                  <td className="px-6 py-4 text-gray-600">
-                    {order.table?.tableNumber || "—"}
-                  </td>
+                    {/* Type */}
 
-                  {/* Total */}
-                  <td className="px-6 py-4 font-medium text-gray-900">
-                    ₹{order.grandTotal.toFixed(2)}
-                  </td>
+                    <td className="px-6 py-4 text-gray-600">
+                      {order.orderType}
+                    </td>
 
-                  {/* Status */}
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
-                        order.status,
-                      )}`}
-                    >
-                      {order.status}
-                    </span>
-                  </td>
+                    {/* Table */}
 
-                  {/* Payment */}
-                  <td className="px-6 py-4">
-                    {order.paymentStatus === "Paid" ? (
-                      <span className="inline-flex whitespace-nowrap rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-                        Paid
+                    <td className="px-6 py-4 text-gray-600">
+                      {order.table?.tableNumber ||
+                        "—"}
+                    </td>
+
+                    {/* Total */}
+
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      ₹
+                      {order.grandTotal.toFixed(
+                        2,
+                      )}
+                    </td>
+
+                    {/* Status */}
+
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
+                          order.status,
+                        )}`}
+                      >
+                        {order.status}
                       </span>
-                    ) : order.paymentStatus === "Refund Initiated" ? (
-                      <span className="inline-flex whitespace-nowrap rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
-                        Refund Initiated
-                      </span>
-                    ) : (
-                      <span className="inline-flex whitespace-nowrap rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
-                        Pending
-                      </span>
-                    )}
-                  </td>
+                    </td>
 
-                  {/* Date */}
-                  <td className="whitespace-nowrap px-6 py-4 text-gray-600">
-                    {formatDate(order.createdAt)}
-                  </td>
+                    {/* Payment */}
 
-                  {/* Actions */}
-                  <td className="px-6 py-4">
-                    <div className="flex justify-end">
+                    <td className="px-6 py-4">
+                      {order.paymentStatus ===
+                      "Paid" ? (
+                        <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
+                          Paid
+                        </span>
+                      ) : order.paymentStatus ===
+                        "Refund Initiated" ? (
+                        <span className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
+                          Refund Initiated
+                        </span>
+                      ) : (
+                        <span className="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
+                          Pending
+                        </span>
+                      )}
+                    </td>
+
+                    {/* Date */}
+
+                    <td className="whitespace-nowrap px-6 py-4 text-gray-600">
+                      {formatDate(
+                        order.createdAt,
+                      )}
+                    </td>
+
+                    {/* Action */}
+
+                    <td className="px-6 py-4 text-right">
                       <button
                         type="button"
-                        onClick={() => viewOrder(order._id)}
-                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                        onClick={() =>
+                          viewOrder(order._id)
+                        }
+                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                       >
                         View
                       </button>
-                    </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan={9}
+                    className="px-6 py-10 text-center text-gray-500"
+                  >
+                    No orders found.
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td
-                  colSpan={9}
-                  className="px-6 py-10 text-center text-gray-500"
-                >
-                  {search
-                    ? "No orders found matching your search."
-                    : "No orders found."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    {/* =====================================================
-        MOBILE ORDER CARDS
-    ====================================================== */}
-
-    <div className="space-y-4 md:hidden">
-      {filteredOrders.length > 0 ? (
-        filteredOrders.map((order) => (
-          <div
-            key={order._id}
-            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-          >
-            {/* Card Header */}
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-gray-500">
-                  Order
-                </p>
-
-                <h2 className="truncate text-base font-bold text-gray-900">
-                  {order.orderNumber}
-                </h2>
-              </div>
-
-              <span
-                className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
-                  order.status,
-                )}`}
-              >
-                {order.status}
-              </span>
-            </div>
-
-            {/* Customer */}
-            <div className="mt-4 rounded-lg bg-gray-50 p-3">
-              <p className="text-xs text-gray-500">
-                Customer
-              </p>
-
-              <p className="mt-1 font-medium text-gray-900">
-                {order.customer?.name ||
-                  order.customerName ||
-                  "Walk-in Customer"}
-              </p>
-
-              {order.customer?.phone && (
-                <p className="mt-1 text-xs text-gray-500">
-                  {order.customer.phone}
-                </p>
               )}
-            </div>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-            {/* Order Information */}
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-xs text-gray-500">
-                  Order Type
-                </p>
+      {/* =========================
+          MOBILE CARDS
+      ========================= */}
 
-                <p className="mt-1 text-sm font-medium text-gray-900">
-                  {order.orderType}
-                </p>
+      <div className="space-y-4 md:hidden">
+        {filteredOrders.length > 0 ? (
+          filteredOrders.map((order) => (
+            <div
+              key={order._id}
+              className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+            >
+              {/* Header */}
+
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-500">
+                    Order
+                  </p>
+
+                  <h2 className="truncate text-base font-bold text-gray-900">
+                    {order.orderNumber}
+                  </h2>
+                </div>
+
+                <span
+                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
+                    order.status,
+                  )}`}
+                >
+                  {order.status}
+                </span>
               </div>
 
-              <div>
+              {/* Customer */}
+
+              <div className="mt-4 rounded-lg bg-gray-50 p-3">
                 <p className="text-xs text-gray-500">
-                  Table
+                  Customer
                 </p>
 
-                <p className="mt-1 text-sm font-medium text-gray-900">
-                  {order.table?.tableNumber || "—"}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">
-                  Items
+                <p className="mt-1 font-medium text-gray-900">
+                  {order.customer?.name ||
+                    order.customerName ||
+                    "Walk-in Customer"}
                 </p>
 
-                <p className="mt-1 text-sm font-medium text-gray-900">
-                  {order.items.length}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-xs text-gray-500">
-                  Payment
-                </p>
-
-                {order.paymentStatus === "Paid" ? (
-                  <span className="mt-1 inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
-                    Paid
-                  </span>
-                ) : order.paymentStatus === "Refund Initiated" ? (
-                  <span className="mt-1 inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700">
-                    Refund
-                  </span>
-                ) : (
-                  <span className="mt-1 inline-flex rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-700">
-                    Pending
-                  </span>
+                {order.customer?.phone && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    {order.customer.phone}
+                  </p>
                 )}
               </div>
-            </div>
 
-            {/* Total + Date */}
-            <div className="mt-4 flex items-end justify-between border-t border-gray-100 pt-4">
-              <div>
-                <p className="text-xs text-gray-500">
-                  Total
-                </p>
+              {/* Details */}
 
-                <p className="mt-1 text-lg font-bold text-gray-900">
-                  ₹{order.grandTotal.toFixed(2)}
-                </p>
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-500">
+                    Order Type
+                  </p>
+
+                  <p className="mt-1 text-sm font-medium text-gray-900">
+                    {order.orderType}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500">
+                    Table
+                  </p>
+
+                  <p className="mt-1 text-sm font-medium text-gray-900">
+                    {order.table?.tableNumber ||
+                      "—"}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500">
+                    Items
+                  </p>
+
+                  <p className="mt-1 text-sm font-medium text-gray-900">
+                    {order.items.length}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-500">
+                    Payment
+                  </p>
+
+                  {order.paymentStatus ===
+                  "Paid" ? (
+                    <span className="mt-1 inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+                      Paid
+                    </span>
+                  ) : order.paymentStatus ===
+                    "Refund Initiated" ? (
+                    <span className="mt-1 inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700">
+                      Refund
+                    </span>
+                  ) : (
+                    <span className="mt-1 inline-flex rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-medium text-yellow-700">
+                      Pending
+                    </span>
+                  )}
+                </div>
               </div>
 
-              <div className="text-right">
-                <p className="text-xs text-gray-500">
-                  Date
-                </p>
+              {/* Total */}
 
-                <p className="mt-1 max-w-[140px] text-xs text-gray-600">
-                  {formatDate(order.createdAt)}
-                </p>
+              <div className="mt-4 flex items-end justify-between border-t border-gray-100 pt-4">
+                <div>
+                  <p className="text-xs text-gray-500">
+                    Total
+                  </p>
+
+                  <p className="mt-1 text-lg font-bold text-gray-900">
+                    ₹
+                    {order.grandTotal.toFixed(
+                      2,
+                    )}
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <p className="text-xs text-gray-500">
+                    Date
+                  </p>
+
+                  <p className="mt-1 max-w-[140px] text-xs text-gray-600">
+                    {formatDate(
+                      order.createdAt,
+                    )}
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {/* View Button */}
-            <button
-              type="button"
-              onClick={() => viewOrder(order._id)}
-              className="mt-4 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 active:bg-gray-100"
-            >
-              View Order
-            </button>
+              {/* View */}
+
+              <button
+                type="button"
+                onClick={() =>
+                  viewOrder(order._id)
+                }
+                className="mt-4 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                View Order
+              </button>
+            </div>
+          ))
+        ) : (
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500 shadow-sm">
+            No orders found.
           </div>
-        ))
-      ) : (
-        <div className="rounded-xl border border-gray-200 bg-white px-4 py-10 text-center text-sm text-gray-500 shadow-sm">
-          {search
-            ? "No orders found matching your search."
-            : "No orders found."}
+        )}
+      </div>
+
+      {/* =========================
+          PAGINATION
+      ========================= */}
+
+      {pagination.totalItems > 0 && (
+        <div className="rounded-xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-center text-sm text-gray-500 sm:text-left">
+              Page{" "}
+              <span className="font-medium text-gray-700">
+                {pagination.currentPage}
+              </span>{" "}
+              of{" "}
+              <span className="font-medium text-gray-700">
+                {pagination.totalPages}
+              </span>{" "}
+              (
+              <span className="font-medium text-gray-700">
+                {pagination.totalItems}
+              </span>{" "}
+              orders)
+            </p>
+
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  goToPage(
+                    pagination.currentPage -
+                      1,
+                  )
+                }
+                disabled={
+                  pagination.currentPage === 1
+                }
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+
+              <span className="rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white">
+                {pagination.currentPage}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  goToPage(
+                    pagination.currentPage +
+                      1,
+                  )
+                }
+                disabled={
+                  pagination.currentPage ===
+                  pagination.totalPages
+                }
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       )}
-    </div>
 
-    {/* =====================================================
-        PAGINATION
-    ====================================================== */}
+      {/* =========================
+          VIEW ORDER MODAL
+      ========================= */}
 
-    {totalItems > 0 && (
-      <div className="rounded-xl border border-gray-100 bg-white px-4 py-4 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Results */}
-          <p className="text-center text-sm text-gray-500 sm:text-left">
-            Showing{" "}
-            <span className="font-medium text-gray-700">
-              {(currentPage - 1) * itemsPerPage + 1}
-            </span>{" "}
-            to{" "}
-            <span className="font-medium text-gray-700">
-              {Math.min(
-                currentPage * itemsPerPage,
-                totalItems,
-              )}
-            </span>{" "}
-            of{" "}
-            <span className="font-medium text-gray-700">
-              {totalItems}
-            </span>{" "}
-            orders
-          </p>
+      {isViewModalOpen && selectedOrder && (
+        <ViewOrderModal
+          order={selectedOrder}
+          onClose={() => {
+            setIsViewModalOpen(false);
+            setSelectedOrder(null);
+          }}
+          onMarkAsPaid={markAsPaid}
+          onMarkAsServed={markAsServed}
+          onCancelOrder={(order) =>
+            setOrderToCancel(order)
+          }
+          canCancelOrder={
+            user?.role === "Manager" ||
+            user?.role === "Cashier"
+          }
+          canMarkAsServed={
+            user?.role === "Manager" ||
+            user?.role === "Cashier" ||
+            user?.role === "Waiter"
+          }
+          paymentLoading={
+            paymentLoading === selectedOrder._id
+          }
+          servingLoading={
+            servingOrderId === selectedOrder._id
+          }
+          invoiceSettings={invoiceSettings}
+        />
+      )}
 
-          {/* Controls */}
-          <div className="flex items-center justify-center gap-2">
-            <button
-              type="button"
-              disabled={currentPage === 1}
-              onClick={() => getOrders(currentPage - 1)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Previous
-            </button>
+      {/* =========================
+          CONFIRM CANCEL MODAL
+      ========================= */}
 
-            <span className="whitespace-nowrap px-1 text-sm text-gray-600">
-              {currentPage} / {totalPages}
-            </span>
-
-            <button
-              type="button"
-              disabled={currentPage === totalPages}
-              onClick={() => getOrders(currentPage + 1)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* View Order Modal */}
-    {isViewModalOpen && selectedOrder && (
-      <ViewOrderModal
-        order={selectedOrder}
-        onClose={() => {
-          setIsViewModalOpen(false);
-          setSelectedOrder(null);
-        }}
-        onMarkAsPaid={markAsPaid}
-        onMarkAsServed={markAsServed}
-        onCancelOrder={(order) =>
-          setOrderToCancel(order)
+      <ConfirmModal
+        isOpen={orderToCancel !== null}
+        title="Cancel Order"
+        message={
+          orderToCancel?.paymentStatus ===
+          "Paid"
+            ? `Cancel ${
+                orderToCancel.orderNumber
+              }? Its payment will change to Refund Initiated and it will be removed from sales.${
+                orderToCancel.status ===
+                "Pending"
+                  ? " Stock will also be restored."
+                  : ""
+              }`
+            : `Cancel ${
+                orderToCancel?.orderNumber ??
+                "this order"
+              }?${
+                orderToCancel?.status ===
+                "Pending"
+                  ? " Stock will be restored."
+                  : ""
+              } Its table will be released.`
         }
-        canCancelOrder={
-          user?.role === "Manager" ||
-          user?.role === "Cashier"
+        confirmText="Cancel Order"
+        cancelText="Keep Order"
+        loading={cancellingOrder}
+        onCancel={() =>
+          setOrderToCancel(null)
         }
-        canMarkAsServed={
-          user?.role === "Manager" ||
-          user?.role === "Cashier" ||
-          user?.role === "Waiter"
-        }
-        paymentLoading={
-          paymentLoading === selectedOrder._id
-        }
-        servingLoading={
-          servingOrderId === selectedOrder._id
-        }
-        invoiceSettings={invoiceSettings}
+        onConfirm={cancelOrder}
       />
-    )}
-
-    {/* Confirm Cancel Modal */}
-    <ConfirmModal
-      isOpen={orderToCancel !== null}
-      title="Cancel Order"
-      message={
-        orderToCancel?.paymentStatus === "Paid"
-          ? `Cancel ${orderToCancel.orderNumber}? Its payment will change to Refund Initiated and it will be removed from sales.${
-              orderToCancel.status === "Pending"
-                ? " Stock will also be restored."
-                : ""
-            }`
-          : `Cancel ${
-              orderToCancel?.orderNumber ?? "this order"
-            }?${
-              orderToCancel?.status === "Pending"
-                ? " Stock will be restored."
-                : ""
-            } Its table will be released.`
-      }
-      confirmText="Cancel Order"
-      cancelText="Keep Order"
-      loading={cancellingOrder}
-      onCancel={() => setOrderToCancel(null)}
-      onConfirm={cancelOrder}
-    />
-  </div>
-);
+    </div>
+  );
 };
 
 export default Orders;

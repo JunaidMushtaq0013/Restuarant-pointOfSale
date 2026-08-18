@@ -276,19 +276,29 @@ export const createOrderService = async (
 export const getAllOrdersService = async (
   page = 1,
   limit = 10,
+  status?: string,
 ) => {
   const skip = (page - 1) * limit;
 
+  const filter: any = {};
+
+  if (status) {
+    filter.status = status;
+  }
+
   const [orders, totalOrders] = await Promise.all([
-    Order.find()
+    Order.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate("customer", "name phone")
       .populate("items.menu", "name sellingPrice type")
-      .populate("table", "tableNumber capacity status"),
+      .populate(
+        "table",
+        "tableNumber capacity status",
+      ),
 
-    Order.countDocuments(),
+    Order.countDocuments(filter),
   ]);
 
   return {
@@ -301,6 +311,8 @@ export const getAllOrdersService = async (
     },
   };
 };
+
+
 export const getOrderByIdService = async (id: string) => {
   return await Order.findById(id)
     .populate("customer", "name phone")
