@@ -287,11 +287,11 @@ const ViewOrderModal = ({
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 border-t pt-5">
+          <div className="grid grid-cols-2 gap-2 border-t pt-5 md:flex md:justify-end md:gap-3">
             <button
               type="button"
               onClick={printInvoice}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="w-full min-w-0 rounded-lg border border-gray-300 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 md:w-auto md:px-4 md:text-sm"
             >
               Print Invoice
             </button>
@@ -301,7 +301,7 @@ const ViewOrderModal = ({
                 type="button"
                 disabled={paymentLoading}
                 onClick={() => onMarkAsPaid(order._id)}
-                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full min-w-0 rounded-lg bg-green-600 px-2 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 md:w-auto md:px-4 md:text-sm"
               >
                 {paymentLoading ? "Processing..." : "Mark as Paid"}
               </button>
@@ -312,7 +312,7 @@ const ViewOrderModal = ({
                 type="button"
                 disabled={servingLoading}
                 onClick={() => onMarkAsServed(order._id)}
-                className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="w-full min-w-0 rounded-lg bg-purple-600 px-2 py-2 text-xs font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-50 md:w-auto md:px-4 md:text-sm"
               >
                 {servingLoading
                   ? "Updating..."
@@ -328,7 +328,7 @@ const ViewOrderModal = ({
                 <button
                   type="button"
                   onClick={() => onCancelOrder(order)}
-                  className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                  className="w-full min-w-0 rounded-lg border border-red-200 px-2 py-2 text-xs font-medium text-red-600 hover:bg-red-50 md:w-auto md:px-4 md:text-sm"
                 >
                   Cancel Order
                 </button>
@@ -337,7 +337,7 @@ const ViewOrderModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="w-full min-w-0 rounded-lg border border-gray-300 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 md:w-auto md:px-4 md:text-sm"
             >
               Close
             </button>
