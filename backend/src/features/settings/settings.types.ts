@@ -1,6 +1,10 @@
 export interface SettingsType {
   restaurantName: string;
 
+  logoUrl?: string;
+
+  initials?: string;
+
   restaurantAddress: string;
 
   phone: string;

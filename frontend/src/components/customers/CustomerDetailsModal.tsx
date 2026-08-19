@@ -227,7 +227,7 @@ const CustomerDetailsModal = ({
         <div className="flex justify-end border-t px-6 py-4">
           <button
             onClick={onClose}
-            className="rounded-lg bg-gray-900 px-5 py-2 text-sm font-medium text-white hover:bg-gray-800"
+            className="btn-primary"
           >
             Close
           </button>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import api from "../../api/axious";
 import { useAuth } from "../../context/AuthContext";
@@ -97,6 +97,7 @@ const Orders = () => {
 
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
 
   // =========================
   // Search
@@ -168,12 +169,17 @@ const Orders = () => {
   // Get Orders
   // =========================
 
-  const getOrders = async (
+  const getOrders = useCallback(async (
     page: number = 1,
-    status: OrderStatus = statusFilter,
+    status: OrderStatus = "",
+    isTableUpdate = false,
   ) => {
     try {
-      setLoading(true);
+      if (isTableUpdate) {
+        setTableLoading(true);
+      } else {
+        setLoading(true);
+      }
 
       const response = await api.get("/orders", {
         params: {
@@ -194,17 +200,25 @@ const Orders = () => {
 
       toast.error("Failed to load orders.");
     } finally {
-      setLoading(false);
+      if (isTableUpdate) {
+        setTableLoading(false);
+      } else {
+        setLoading(false);
+      }
     }
-  };
+  }, []);
 
   // =========================
   // Initial Load
   // =========================
 
   useEffect(() => {
-    getOrders(1, "");
-  }, []);
+    const loadOrders = async () => {
+      await getOrders(1, "");
+    };
+
+    void loadOrders();
+  }, [getOrders]);
 
   // =========================
   // Search
@@ -232,7 +246,7 @@ const Orders = () => {
 
     // Always start from page 1
     // when changing the filter.
-    getOrders(1, status);
+    getOrders(1, status, true);
   };
 
   // =========================
@@ -247,7 +261,7 @@ const Orders = () => {
       return;
     }
 
-    getOrders(newPage, statusFilter);
+    getOrders(newPage, statusFilter, true);
   };
 
   // =========================
@@ -489,14 +503,6 @@ const Orders = () => {
   };
 
   // =========================
-  // Format Date
-  // =========================
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleString();
-  };
-
-  // =========================
   // Loading
   // =========================
 
@@ -604,13 +610,18 @@ const Orders = () => {
               }
               className={`rounded-lg px-4 py-2.5 text-sm font-medium transition ${
                 statusFilter === status
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-[#221b18] text-[#f0d9b6]"
+                  : "bg-[#f5ede3] text-[#4a3f38] hover:bg-[#ede2d8]"
               }`}
             >
               {status || "All"}
             </button>
           ))}
+          {tableLoading && (
+            <span className="flex items-center px-2 text-xs text-gray-500">
+              Updating orders...
+            </span>
+          )}
         </div>
       </div>
 
@@ -640,19 +651,11 @@ const Orders = () => {
                 </th>
 
                 <th className="px-6 py-4 font-medium text-gray-600">
-                  Total
-                </th>
-
-                <th className="px-6 py-4 font-medium text-gray-600">
                   Status
                 </th>
 
                 <th className="px-6 py-4 font-medium text-gray-600">
                   Payment
-                </th>
-
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Date
                 </th>
 
                 <th className="px-6 py-4 text-right font-medium text-gray-600">
@@ -703,15 +706,6 @@ const Orders = () => {
                         "—"}
                     </td>
 
-                    {/* Total */}
-
-                    <td className="px-6 py-4 font-medium text-gray-900">
-                      ₹
-                      {order.grandTotal.toFixed(
-                        2,
-                      )}
-                    </td>
-
                     {/* Status */}
 
                     <td className="px-6 py-4">
@@ -744,14 +738,6 @@ const Orders = () => {
                       )}
                     </td>
 
-                    {/* Date */}
-
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-600">
-                      {formatDate(
-                        order.createdAt,
-                      )}
-                    </td>
-
                     {/* Action */}
 
                     <td className="px-6 py-4 text-right">
@@ -770,7 +756,7 @@ const Orders = () => {
               ) : (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={7}
                     className="px-6 py-10 text-center text-gray-500"
                   >
                     No orders found.
@@ -889,35 +875,6 @@ const Orders = () => {
                       Pending
                     </span>
                   )}
-                </div>
-              </div>
-
-              {/* Total */}
-
-              <div className="mt-4 flex items-end justify-between border-t border-gray-100 pt-4">
-                <div>
-                  <p className="text-xs text-gray-500">
-                    Total
-                  </p>
-
-                  <p className="mt-1 text-lg font-bold text-gray-900">
-                    ₹
-                    {order.grandTotal.toFixed(
-                      2,
-                    )}
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-xs text-gray-500">
-                    Date
-                  </p>
-
-                  <p className="mt-1 max-w-[140px] text-xs text-gray-600">
-                    {formatDate(
-                      order.createdAt,
-                    )}
-                  </p>
                 </div>
               </div>
 

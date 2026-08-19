@@ -7,6 +7,8 @@ export const getSettingsService = async () => {
   if (!settings) {
     settings = await Settings.create({
       restaurantName: "Demo Restaurant",
+      logoUrl: "",
+      initials: "DR",
       restaurantAddress: "Demo street",
       phone: "0000000000",
       email: "restaurant@example.com",

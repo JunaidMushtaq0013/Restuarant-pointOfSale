@@ -128,7 +128,7 @@ const Kitchen = () => {
                   type="button"
                   onClick={() => updateStatus(order)}
                   disabled={updatingOrderId === order._id}
-                  className="w-full bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="btn-primary w-full"
                 >
                   {updatingOrderId === order._id ? "Updating..." : actionLabel}
                 </button>

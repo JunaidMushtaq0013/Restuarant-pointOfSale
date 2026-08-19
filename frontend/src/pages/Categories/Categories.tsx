@@ -241,7 +241,7 @@ const Categories = () => {
       {!showInactive && (
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 sm:w-auto"
+          className="btn-primary sm:w-auto w-full"
         >
           + Add Category
         </button>
@@ -257,8 +257,8 @@ const Categories = () => {
         }}
         className={`rounded-lg px-4 py-2 text-sm font-medium ${
           !showInactive
-            ? "bg-gray-900 text-white"
-            : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+            ? "bg-[#221b18] text-[#f0d9b6]"
+            : "border border-[#d9c9b3] bg-white text-[#4a3f38] hover:bg-[#f9f6f2]"
         }`}
       >
         Active Categories
@@ -271,8 +271,8 @@ const Categories = () => {
         }}
         className={`rounded-lg px-4 py-2 text-sm font-medium ${
           showInactive
-            ? "bg-gray-900 text-white"
-            : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+            ? "bg-[#221b18] text-[#f0d9b6]"
+            : "border border-[#d9c9b3] bg-white text-[#4a3f38] hover:bg-[#f9f6f2]"
         }`}
       >
         Inactive Categories

@@ -54,42 +54,33 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
   };
 
   return (
-    <header className="h-16 border-b bg-white">
-      <div className="flex h-full items-center justify-between px-4 sm:px-6">
-        {/* Left Side */}
+    <header className="sticky top-0 z-40 border-b border-[#e6d4bb] bg-[linear-gradient(135deg,#fffaf4_0%,#f8efe6_100%)] shadow-[0_8px_22px_rgba(61,37,24,0.06)] backdrop-blur-xl">
+      <div className="flex h-16 items-center justify-between px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          {/* Hamburger */}
           <button
             onClick={onMenuClick}
-            className="shrink-0 rounded-lg p-2 text-gray-700 transition hover:bg-gray-100 xl:hidden"
+            className="shrink-0 rounded-xl border border-[#e5d3b3] bg-[#fffaf4] p-2 text-[#4f2d1d] transition hover:bg-[#f6ebdd] xl:hidden"
             aria-label="Open navigation menu"
           >
             <span className="text-xl">☰</span>
           </button>
 
-          {/* Restaurant Name */}
-          <h1 className="truncate text-lg font-bold text-gray-800 sm:text-xl">
-            {restaurantName}
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="hidden sm:block truncate text-lg font-semibold tracking-[0.04em] text-[#2a1d18] sm:text-xl">
+              {restaurantName}
+            </h1>
+          </div>
         </div>
 
-        {/* Right Side */}
         <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-          {/* User Info */}
-          <div className="hidden text-right sm:block">
-            <p className="font-medium text-gray-800">
-              {user?.name}
-            </p>
-
-            <p className="text-sm text-gray-500">
-              {user?.role}
-            </p>
+          <div className="hidden rounded-full border-[0.5px] border-[#e5d3b3] bg-[#fffaf4] px-2 py-1 text-right sm:block">
+            <p className="text-xs font-medium text-[#2a1d18]">{user?.name}</p>
+            <p className="text-[10px] text-[#725a4f]">{user?.role}</p>
           </div>
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
-            className="rounded-lg bg-red-500 px-3 py-2 text-xs font-medium text-white transition hover:bg-red-600 sm:px-4 sm:text-sm"
+            className="rounded-xl bg-[linear-gradient(135deg,#d9b06c_0%,#b58241_100%)] px-3 py-2 text-xs font-semibold text-[#2a1d18] shadow-[0_8px_18px_rgba(201,154,90,0.18)] transition hover:brightness-105 sm:px-4 sm:text-sm"
           >
             Logout
           </button>

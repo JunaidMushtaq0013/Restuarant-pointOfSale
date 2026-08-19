@@ -6,6 +6,19 @@ export const updateSettingsSchema = z.object({
     .trim()
     .min(1, "Restaurant name is required."),
 
+  logoUrl: z
+    .string()
+    .trim()
+    .optional()
+    .default(""),
+
+  initials: z
+    .string()
+    .trim()
+    .max(3, "Initials can be up to 3 characters.")
+    .optional()
+    .default(""),
+
   restaurantAddress: z
     .string()
     .trim()

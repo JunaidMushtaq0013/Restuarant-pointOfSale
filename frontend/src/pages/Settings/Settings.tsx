@@ -5,6 +5,8 @@ import api from "../../api/axious";
 
 interface SettingsData {
   restaurantName: string;
+  logoUrl?: string;
+  initials?: string;
   restaurantAddress: string;
   phone: string;
   email: string;
@@ -60,7 +62,11 @@ const Settings = () => {
       setSettings(response.data.data);
       window.dispatchEvent(
         new CustomEvent("settings-updated", {
-          detail: { restaurantName: response.data.data.restaurantName },
+          detail: {
+            restaurantName: response.data.data.restaurantName,
+            logoUrl: response.data.data.logoUrl || "",
+            initials: response.data.data.initials || "",
+          },
         }),
       );
       toast.success("Settings updated successfully.");
@@ -70,6 +76,25 @@ const Settings = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleLogoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file || !settings) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      setSettings({ ...settings, logoUrl: result, initials: settings.initials || "" });
+    };
+
+    reader.readAsDataURL(file);
   };
 
   if (loading) {
@@ -90,13 +115,54 @@ const Settings = () => {
         <button
           type="submit"
           disabled={saving}
-          className="bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+          className="btn-primary"
         >
           {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
 
       <section className="mt-6 border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="mb-6 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Restaurant Brand</p>
+              <p className="text-xs text-gray-500">Upload a logo, or leave it blank to use initials.</p>
+            </div>
+
+            <label className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+              Upload Logo
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleLogoUpload}
+              />
+            </label>
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <Field
+              label="Initials"
+              value={settings.initials || ""}
+              onChange={(value) => updateField("initials", value.slice(0, 3).toUpperCase())}
+              placeholder="WP"
+            />
+            <div className="flex items-end">
+              <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-gray-200 bg-gray-100 text-lg font-bold text-gray-700">
+                {settings.logoUrl ? (
+                  <img
+                    src={settings.logoUrl}
+                    alt="Restaurant logo preview"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  (settings.initials || "WP").slice(0, 2).toUpperCase()
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="grid gap-5 md:grid-cols-2">
           <Field label="Restaurant Name" value={settings.restaurantName} onChange={(value) => updateField("restaurantName", value)} />
           <Field label="Phone" value={settings.phone} onChange={(value) => updateField("phone", value)} />
@@ -121,16 +187,18 @@ interface FieldProps {
   type?: "email" | "number" | "text" | "time";
   min?: string;
   value: string | number;
+  placeholder?: string;
   onChange: (value: string) => void;
 }
 
-const Field = ({ label, type = "text", min, value, onChange }: FieldProps) => (
+const Field = ({ label, type = "text", min, value, placeholder, onChange }: FieldProps) => (
   <label className="block text-sm font-medium text-gray-700">
     {label}
     <input
       type={type}
       min={min}
       value={value}
+      placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
       required
       className="mt-2 w-full border border-gray-300 px-3 py-2.5 text-gray-900 outline-none focus:border-gray-900"

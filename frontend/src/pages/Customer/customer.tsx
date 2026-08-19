@@ -17,6 +17,21 @@ interface Pagination {
   itemsPerPage: number;
 }
 
+interface CustomerOrder {
+  _id: string;
+  orderNumber: string;
+  grandTotal: number;
+  paymentStatus: "Pending" | "Paid" | "Refund Initiated";
+  status:
+    | "Pending"
+    | "Preparing"
+    | "Ready"
+    | "Served"
+    | "Cancelled";
+  orderType: "Dine In" | "Takeaway";
+  createdAt: string;
+}
+
 const Customers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +52,7 @@ const Customers = () => {
   const [selectedCustomer, setSelectedCustomer] =
     useState<Customer | null>(null);
 
-  const [customerOrders, setCustomerOrders] = useState<any[]>([]);
+  const [customerOrders, setCustomerOrders] = useState<CustomerOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
 
   const getCustomers = async (
@@ -144,7 +159,7 @@ const Customers = () => {
 
       <button
         onClick={() => setIsModalOpen(true)}
-        className="w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800 sm:w-auto"
+        className="btn-primary sm:w-auto w-full"
       >
         + Add Customer
       </button>

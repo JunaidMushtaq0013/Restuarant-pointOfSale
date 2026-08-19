@@ -10,6 +10,19 @@ const settingsSchema = new Schema<SettingsType>(
       trim: true,
     },
 
+    logoUrl: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    initials: {
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 3,
+    },
+
     restaurantAddress: {
       type: String,
       required: true,

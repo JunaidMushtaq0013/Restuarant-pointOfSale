@@ -119,7 +119,7 @@ const EditCategoryModal = ({
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="btn-secondary"
             >
               Cancel
             </button>
@@ -127,7 +127,7 @@ const EditCategoryModal = ({
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn-primary"
             >
               {submitting ? "Saving..." : "Save Changes"}
             </button>

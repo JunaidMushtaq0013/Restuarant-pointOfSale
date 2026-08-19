@@ -112,12 +112,6 @@ const NewOrder = () => {
     }
   };
 
-  useEffect(() => {
-    getMenu();
-    getTables();
-    getOrderSettings();
-  }, []);
-
   const categories = [
     "All",
     ...Array.from(
@@ -209,6 +203,12 @@ const NewOrder = () => {
       toast.error("Failed to load GST and service-charge settings.");
     }
   };
+
+  useEffect(() => {
+    getMenu();
+    getTables();
+    getOrderSettings();
+  }, []);
 
   // Add item to cart
   const addToCart = (menuItem: MenuItem) => {
@@ -380,8 +380,8 @@ const NewOrder = () => {
               onClick={() => setSelectedCategory(category)}
               className={`whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition ${
                 selectedCategory === category
-                  ? "border-gray-900 bg-gray-900 text-white"
-                  : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                  ? "border-[#221b18] bg-[#221b18] text-[#f0d9b6]"
+                  : "border-[#d9c9b3] bg-white text-[#4a3f38] hover:bg-[#f9f6f2]"
               }`}
             >
               {category}
@@ -520,8 +520,8 @@ const NewOrder = () => {
               onClick={() => handleOrderTypeChange("Dine In")}
               className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
                 orderType === "Dine In"
-                  ? "border-gray-900 bg-gray-900 text-white"
-                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                  ? "border-[#221b18] bg-[#221b18] text-[#f0d9b6]"
+                  : "border-[#d9c9b3] bg-white text-[#4a3f38] hover:bg-[#f9f6f2]"
               }`}
             >
               Dine In
@@ -532,8 +532,8 @@ const NewOrder = () => {
               onClick={() => handleOrderTypeChange("Takeaway")}
               className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
                 orderType === "Takeaway"
-                  ? "border-gray-900 bg-gray-900 text-white"
-                  : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
+                  ? "border-[#221b18] bg-[#221b18] text-[#f0d9b6]"
+                  : "border-[#d9c9b3] bg-white text-[#4a3f38] hover:bg-[#f9f6f2]"
               }`}
             >
               Takeaway
@@ -725,7 +725,7 @@ const NewOrder = () => {
                   type="button"
                   disabled={placingOrder}
                   onClick={() => placeOrder("Paid")}
-                  className="rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="btn-primary"
                 >
                   {placingOrder ? "Processing..." : "Pay Now"}
                 </button>
@@ -734,7 +734,7 @@ const NewOrder = () => {
                   type="button"
                   disabled={placingOrder}
                   onClick={() => placeOrder("Pending")}
-                  className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="btn-secondary"
                 >
                   Pay Later
                 </button>
