@@ -348,7 +348,7 @@ const NewOrder = () => {
   }
 
   return (
-   <div className="flex min-h-[calc(100vh-2rem)] flex-col gap-4 overflow-hidden lg:h-[calc(100vh-2rem)] lg:flex-row">
+    <div className="flex min-h-[calc(100vh-2rem)] flex-col gap-4 overflow-hidden lg:h-[calc(100vh-2rem)] lg:flex-row">
       {/* LEFT - MENU */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Header */}

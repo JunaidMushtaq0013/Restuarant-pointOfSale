@@ -46,17 +46,9 @@ export interface Order {
 
   grandTotal: number;
 
-  paymentStatus:
-    | "Pending"
-    | "Paid"
-    | "Refund Initiated";
+  paymentStatus: "Pending" | "Paid" | "Refund Initiated";
 
-  status:
-    | "Pending"
-    | "Preparing"
-    | "Ready"
-    | "Served"
-    | "Cancelled";
+  status: "Pending" | "Preparing" | "Ready" | "Served" | "Cancelled";
 
   isActive: boolean;
 
@@ -109,54 +101,46 @@ const Orders = () => {
   // Status Filter
   // =========================
 
-  const [statusFilter, setStatusFilter] =
-    useState<OrderStatus>("");
+  const [statusFilter, setStatusFilter] = useState<OrderStatus>("");
 
   // =========================
   // Pagination
   // =========================
 
-  const [pagination, setPagination] =
-    useState<Pagination>({
-      currentPage: 1,
-      totalPages: 1,
-      totalItems: 0,
-      limit: 10,
-    });
+  const [pagination, setPagination] = useState<Pagination>({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    limit: 10,
+  });
 
   // =========================
   // View Order Modal
   // =========================
 
-  const [selectedOrder, setSelectedOrder] =
-    useState<Order | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
-  const [isViewModalOpen, setIsViewModalOpen] =
-    useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   // =========================
   // Payment
   // =========================
 
-  const [paymentLoading, setPaymentLoading] =
-    useState<string | null>(null);
+  const [paymentLoading, setPaymentLoading] = useState<string | null>(null);
 
   // =========================
   // Served
   // =========================
 
-  const [servingOrderId, setServingOrderId] =
-    useState<string | null>(null);
+  const [servingOrderId, setServingOrderId] = useState<string | null>(null);
 
   // =========================
   // Cancel
   // =========================
 
-  const [orderToCancel, setOrderToCancel] =
-    useState<Order | null>(null);
+  const [orderToCancel, setOrderToCancel] = useState<Order | null>(null);
 
-  const [cancellingOrder, setCancellingOrder] =
-    useState(false);
+  const [cancellingOrder, setCancellingOrder] = useState(false);
 
   // =========================
   // Invoice Settings
@@ -169,44 +153,44 @@ const Orders = () => {
   // Get Orders
   // =========================
 
-  const getOrders = useCallback(async (
-    page: number = 1,
-    status: OrderStatus = "",
-    isTableUpdate = false,
-  ) => {
-    try {
-      if (isTableUpdate) {
-        setTableLoading(true);
-      } else {
-        setLoading(true);
+  const getOrders = useCallback(
+    async (
+      page: number = 1,
+      status: OrderStatus = "",
+      isTableUpdate = false,
+    ) => {
+      try {
+        if (isTableUpdate) {
+          setTableLoading(true);
+        } else {
+          setLoading(true);
+        }
+
+        const response = await api.get("/orders", {
+          params: {
+            page,
+            limit: 10,
+            status: status || undefined,
+          },
+        });
+
+        setOrders(response.data.data);
+
+        setPagination(response.data.pagination);
+      } catch (error) {
+        console.error("Failed to load orders:", error);
+
+        toast.error("Failed to load orders.");
+      } finally {
+        if (isTableUpdate) {
+          setTableLoading(false);
+        } else {
+          setLoading(false);
+        }
       }
-
-      const response = await api.get("/orders", {
-        params: {
-          page,
-          limit: 10,
-          status: status || undefined,
-        },
-      });
-
-      setOrders(response.data.data);
-
-      setPagination(response.data.pagination);
-    } catch (error) {
-      console.error(
-        "Failed to load orders:",
-        error,
-      );
-
-      toast.error("Failed to load orders.");
-    } finally {
-      if (isTableUpdate) {
-        setTableLoading(false);
-      } else {
-        setLoading(false);
-      }
-    }
-  }, []);
+    },
+    [],
+  );
 
   // =========================
   // Initial Load
@@ -239,9 +223,7 @@ const Orders = () => {
   // Status Filter
   // =========================
 
-  const handleStatusFilter = (
-    status: OrderStatus,
-  ) => {
+  const handleStatusFilter = (status: OrderStatus) => {
     setStatusFilter(status);
 
     // Always start from page 1
@@ -254,10 +236,7 @@ const Orders = () => {
   // =========================
 
   const goToPage = (newPage: number) => {
-    if (
-      newPage < 1 ||
-      newPage > pagination.totalPages
-    ) {
+    if (newPage < 1 || newPage > pagination.totalPages) {
       return;
     }
 
@@ -268,31 +247,20 @@ const Orders = () => {
   // Search Current Page
   // =========================
 
-  const filteredOrders = orders.filter(
-    (order) => {
-      const searchValue =
-        search.trim().toLowerCase();
+  const filteredOrders = orders.filter((order) => {
+    const searchValue = search.trim().toLowerCase();
 
-      if (!searchValue) {
-        return true;
-      }
+    if (!searchValue) {
+      return true;
+    }
 
-      return (
-        order.orderNumber
-          ?.toLowerCase()
-          .includes(searchValue) ||
-        order.customer?.name
-          ?.toLowerCase()
-          .includes(searchValue) ||
-        order.customer?.phone?.includes(
-          searchValue,
-        ) ||
-        order.customerName
-          ?.toLowerCase()
-          .includes(searchValue)
-      );
-    },
-  );
+    return (
+      order.orderNumber?.toLowerCase().includes(searchValue) ||
+      order.customer?.name?.toLowerCase().includes(searchValue) ||
+      order.customer?.phone?.includes(searchValue) ||
+      order.customerName?.toLowerCase().includes(searchValue)
+    );
+  });
 
   // =========================
   // View Order
@@ -300,36 +268,23 @@ const Orders = () => {
 
   const viewOrder = async (id: string) => {
     try {
-      const response = await api.get(
-        `/orders/${id}`,
-      );
+      const response = await api.get(`/orders/${id}`);
 
       setSelectedOrder(response.data.data);
 
       setIsViewModalOpen(true);
 
       try {
-        const settingsResponse =
-          await api.get("/settings");
+        const settingsResponse = await api.get("/settings");
 
-        setInvoiceSettings(
-          settingsResponse.data.data,
-        );
+        setInvoiceSettings(settingsResponse.data.data);
       } catch (settingsError) {
-        console.error(
-          "Failed to load invoice settings:",
-          settingsError,
-        );
+        console.error("Failed to load invoice settings:", settingsError);
       }
     } catch (error) {
-      console.error(
-        "Failed to load order:",
-        error,
-      );
+      console.error("Failed to load order:", error);
 
-      toast.error(
-        "Failed to load order details.",
-      );
+      toast.error("Failed to load order details.");
     }
   };
 
@@ -345,18 +300,13 @@ const Orders = () => {
     try {
       setCancellingOrder(true);
 
-      const response = await api.patch(
-        `/orders/${orderToCancel._id}/cancel`,
-      );
+      const response = await api.patch(`/orders/${orderToCancel._id}/cancel`);
 
-      const updatedOrder =
-        response.data.data as Order;
+      const updatedOrder = response.data.data as Order;
 
       setOrders((currentOrders) =>
         currentOrders.map((order) =>
-          order._id === updatedOrder._id
-            ? updatedOrder
-            : order,
+          order._id === updatedOrder._id ? updatedOrder : order,
         ),
       );
 
@@ -365,20 +315,14 @@ const Orders = () => {
       setOrderToCancel(null);
 
       toast.success(
-        updatedOrder.paymentStatus ===
-          "Refund Initiated"
+        updatedOrder.paymentStatus === "Refund Initiated"
           ? "Order cancelled. Refund initiated and removed from sales."
           : "Order cancelled.",
       );
     } catch (error) {
-      console.error(
-        "Failed to cancel order:",
-        error,
-      );
+      console.error("Failed to cancel order:", error);
 
-      toast.error(
-        "Failed to cancel order.",
-      );
+      toast.error("Failed to cancel order.");
     } finally {
       setCancellingOrder(false);
     }
@@ -392,38 +336,23 @@ const Orders = () => {
     try {
       setPaymentLoading(id);
 
-      const response = await api.patch(
-        `/orders/${id}/payment-status`,
-        {
-          paymentStatus: "Paid",
-        },
-      );
+      const response = await api.patch(`/orders/${id}/payment-status`, {
+        paymentStatus: "Paid",
+      });
 
-      const updatedOrder =
-        response.data.data as Order;
+      const updatedOrder = response.data.data as Order;
 
       setOrders((currentOrders) =>
-        currentOrders.map((order) =>
-          order._id === id
-            ? updatedOrder
-            : order,
-        ),
+        currentOrders.map((order) => (order._id === id ? updatedOrder : order)),
       );
 
       setSelectedOrder(updatedOrder);
 
-      toast.success(
-        "Order marked as paid.",
-      );
+      toast.success("Order marked as paid.");
     } catch (error) {
-      console.error(
-        "Failed to update payment:",
-        error,
-      );
+      console.error("Failed to update payment:", error);
 
-      toast.error(
-        "Failed to mark order as paid.",
-      );
+      toast.error("Failed to mark order as paid.");
     } finally {
       setPaymentLoading(null);
     }
@@ -437,38 +366,23 @@ const Orders = () => {
     try {
       setServingOrderId(id);
 
-      const response = await api.patch(
-        `/orders/${id}/status`,
-        {
-          status: "Served",
-        },
-      );
+      const response = await api.patch(`/orders/${id}/status`, {
+        status: "Served",
+      });
 
-      const updatedOrder =
-        response.data.data as Order;
+      const updatedOrder = response.data.data as Order;
 
       setOrders((currentOrders) =>
-        currentOrders.map((order) =>
-          order._id === id
-            ? updatedOrder
-            : order,
-        ),
+        currentOrders.map((order) => (order._id === id ? updatedOrder : order)),
       );
 
       setSelectedOrder(updatedOrder);
 
-      toast.success(
-        "Order marked as served. The table is now available.",
-      );
+      toast.success("Order marked as served. The table is now available.");
     } catch (error) {
-      console.error(
-        "Failed to mark order as served:",
-        error,
-      );
+      console.error("Failed to mark order as served:", error);
 
-      toast.error(
-        "Failed to mark order as served.",
-      );
+      toast.error("Failed to mark order as served.");
     } finally {
       setServingOrderId(null);
     }
@@ -478,9 +392,7 @@ const Orders = () => {
   // Status Classes
   // =========================
 
-  const getStatusClass = (
-    status: Order["status"],
-  ) => {
+  const getStatusClass = (status: Order["status"]) => {
     switch (status) {
       case "Pending":
         return "bg-yellow-100 text-yellow-700";
@@ -509,9 +421,7 @@ const Orders = () => {
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center px-4">
-        <p className="text-sm text-gray-500">
-          Loading orders...
-        </p>
+        <p className="text-sm text-gray-500">Loading orders...</p>
       </div>
     );
   }
@@ -528,9 +438,7 @@ const Orders = () => {
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Orders
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
 
           <p className="mt-1 text-sm text-gray-500">
             View and manage restaurant orders
@@ -554,9 +462,7 @@ const Orders = () => {
           <input
             type="text"
             value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
+            onChange={(event) => setSearch(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Enter") {
                 handleSearch();
@@ -592,31 +498,22 @@ const Orders = () => {
 
       <div className="overflow-x-auto">
         <div className="flex min-w-max gap-2 rounded-xl border border-gray-100 bg-white p-2 shadow-sm">
-          {[
-            "",
-            "Pending",
-            "Preparing",
-            "Ready",
-            "Served",
-            "Cancelled",
-          ].map((status) => (
-            <button
-              key={status || "All"}
-              type="button"
-              onClick={() =>
-                handleStatusFilter(
-                  status as OrderStatus,
-                )
-              }
-              className={`rounded-lg px-4 py-2.5 text-sm font-medium transition ${
-                statusFilter === status
-                  ? "bg-[#221b18] text-[#f0d9b6]"
-                  : "bg-[#f5ede3] text-[#4a3f38] hover:bg-[#ede2d8]"
-              }`}
-            >
-              {status || "All"}
-            </button>
-          ))}
+          {["", "Pending", "Preparing", "Ready", "Served", "Cancelled"].map(
+            (status) => (
+              <button
+                key={status || "All"}
+                type="button"
+                onClick={() => handleStatusFilter(status as OrderStatus)}
+                className={`rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                  statusFilter === status
+                    ? "bg-[#221b18] text-[#f0d9b6]"
+                    : "bg-[#f5ede3] text-[#4a3f38] hover:bg-[#ede2d8]"
+                }`}
+              >
+                {status || "All"}
+              </button>
+            ),
+          )}
           {tableLoading && (
             <span className="flex items-center px-2 text-xs text-gray-500">
               Updating orders...
@@ -634,29 +531,19 @@ const Orders = () => {
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-gray-50">
               <tr>
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Order #
-                </th>
+                <th className="px-6 py-4 font-medium text-gray-600">Order #</th>
 
                 <th className="px-6 py-4 font-medium text-gray-600">
                   Customer
                 </th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Type
-                </th>
+                <th className="px-6 py-4 font-medium text-gray-600">Type</th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Table
-                </th>
+                <th className="px-6 py-4 font-medium text-gray-600">Table</th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Status
-                </th>
+                <th className="px-6 py-4 font-medium text-gray-600">Status</th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Payment
-                </th>
+                <th className="px-6 py-4 font-medium text-gray-600">Payment</th>
 
                 <th className="px-6 py-4 text-right font-medium text-gray-600">
                   Actions
@@ -667,10 +554,7 @@ const Orders = () => {
             <tbody className="divide-y">
               {filteredOrders.length > 0 ? (
                 filteredOrders.map((order) => (
-                  <tr
-                    key={order._id}
-                    className="hover:bg-gray-50"
-                  >
+                  <tr key={order._id} className="hover:bg-gray-50">
                     {/* Order Number */}
 
                     <td className="px-6 py-4 font-medium text-gray-900">
@@ -702,8 +586,7 @@ const Orders = () => {
                     {/* Table */}
 
                     <td className="px-6 py-4 text-gray-600">
-                      {order.table?.tableNumber ||
-                        "—"}
+                      {order.table?.tableNumber || "—"}
                     </td>
 
                     {/* Status */}
@@ -721,13 +604,11 @@ const Orders = () => {
                     {/* Payment */}
 
                     <td className="px-6 py-4">
-                      {order.paymentStatus ===
-                      "Paid" ? (
+                      {order.paymentStatus === "Paid" ? (
                         <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
                           Paid
                         </span>
-                      ) : order.paymentStatus ===
-                        "Refund Initiated" ? (
+                      ) : order.paymentStatus === "Refund Initiated" ? (
                         <span className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
                           Refund Initiated
                         </span>
@@ -743,9 +624,7 @@ const Orders = () => {
                     <td className="px-6 py-4 text-right">
                       <button
                         type="button"
-                        onClick={() =>
-                          viewOrder(order._id)
-                        }
+                        onClick={() => viewOrder(order._id)}
                         className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                       >
                         View
@@ -783,9 +662,7 @@ const Orders = () => {
 
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs text-gray-500">
-                    Order
-                  </p>
+                  <p className="text-xs text-gray-500">Order</p>
 
                   <h2 className="truncate text-base font-bold text-gray-900">
                     {order.orderNumber}
@@ -804,9 +681,7 @@ const Orders = () => {
               {/* Customer */}
 
               <div className="mt-4 rounded-lg bg-gray-50 p-3">
-                <p className="text-xs text-gray-500">
-                  Customer
-                </p>
+                <p className="text-xs text-gray-500">Customer</p>
 
                 <p className="mt-1 font-medium text-gray-900">
                   {order.customer?.name ||
@@ -825,9 +700,7 @@ const Orders = () => {
 
               <div className="mt-4 grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500">
-                    Order Type
-                  </p>
+                  <p className="text-xs text-gray-500">Order Type</p>
 
                   <p className="mt-1 text-sm font-medium text-gray-900">
                     {order.orderType}
@@ -835,20 +708,15 @@ const Orders = () => {
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-500">
-                    Table
-                  </p>
+                  <p className="text-xs text-gray-500">Table</p>
 
                   <p className="mt-1 text-sm font-medium text-gray-900">
-                    {order.table?.tableNumber ||
-                      "—"}
+                    {order.table?.tableNumber || "—"}
                   </p>
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-500">
-                    Items
-                  </p>
+                  <p className="text-xs text-gray-500">Items</p>
 
                   <p className="mt-1 text-sm font-medium text-gray-900">
                     {order.items.length}
@@ -856,17 +724,13 @@ const Orders = () => {
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-500">
-                    Payment
-                  </p>
+                  <p className="text-xs text-gray-500">Payment</p>
 
-                  {order.paymentStatus ===
-                  "Paid" ? (
+                  {order.paymentStatus === "Paid" ? (
                     <span className="mt-1 inline-flex rounded-full bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
                       Paid
                     </span>
-                  ) : order.paymentStatus ===
-                    "Refund Initiated" ? (
+                  ) : order.paymentStatus === "Refund Initiated" ? (
                     <span className="mt-1 inline-flex rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700">
                       Refund
                     </span>
@@ -882,9 +746,7 @@ const Orders = () => {
 
               <button
                 type="button"
-                onClick={() =>
-                  viewOrder(order._id)
-                }
+                onClick={() => viewOrder(order._id)}
                 className="mt-4 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
                 View Order
@@ -924,15 +786,8 @@ const Orders = () => {
             <div className="flex items-center justify-center gap-2">
               <button
                 type="button"
-                onClick={() =>
-                  goToPage(
-                    pagination.currentPage -
-                      1,
-                  )
-                }
-                disabled={
-                  pagination.currentPage === 1
-                }
+                onClick={() => goToPage(pagination.currentPage - 1)}
+                disabled={pagination.currentPage === 1}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Previous
@@ -944,16 +799,8 @@ const Orders = () => {
 
               <button
                 type="button"
-                onClick={() =>
-                  goToPage(
-                    pagination.currentPage +
-                      1,
-                  )
-                }
-                disabled={
-                  pagination.currentPage ===
-                  pagination.totalPages
-                }
+                onClick={() => goToPage(pagination.currentPage + 1)}
+                disabled={pagination.currentPage === pagination.totalPages}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
@@ -976,24 +823,15 @@ const Orders = () => {
           }}
           onMarkAsPaid={markAsPaid}
           onMarkAsServed={markAsServed}
-          onCancelOrder={(order) =>
-            setOrderToCancel(order)
-          }
-          canCancelOrder={
-            user?.role === "Manager" ||
-            user?.role === "Cashier"
-          }
+          onCancelOrder={(order) => setOrderToCancel(order)}
+          canCancelOrder={user?.role === "Manager" || user?.role === "Cashier"}
           canMarkAsServed={
             user?.role === "Manager" ||
             user?.role === "Cashier" ||
             user?.role === "Waiter"
           }
-          paymentLoading={
-            paymentLoading === selectedOrder._id
-          }
-          servingLoading={
-            servingOrderId === selectedOrder._id
-          }
+          paymentLoading={paymentLoading === selectedOrder._id}
+          servingLoading={servingOrderId === selectedOrder._id}
           invoiceSettings={invoiceSettings}
         />
       )}
@@ -1006,22 +844,16 @@ const Orders = () => {
         isOpen={orderToCancel !== null}
         title="Cancel Order"
         message={
-          orderToCancel?.paymentStatus ===
-          "Paid"
+          orderToCancel?.paymentStatus === "Paid"
             ? `Cancel ${
                 orderToCancel.orderNumber
               }? Its payment will change to Refund Initiated and it will be removed from sales.${
-                orderToCancel.status ===
-                "Pending"
+                orderToCancel.status === "Pending"
                   ? " Stock will also be restored."
                   : ""
               }`
-            : `Cancel ${
-                orderToCancel?.orderNumber ??
-                "this order"
-              }?${
-                orderToCancel?.status ===
-                "Pending"
+            : `Cancel ${orderToCancel?.orderNumber ?? "this order"}?${
+                orderToCancel?.status === "Pending"
                   ? " Stock will be restored."
                   : ""
               } Its table will be released.`
@@ -1029,9 +861,7 @@ const Orders = () => {
         confirmText="Cancel Order"
         cancelText="Keep Order"
         loading={cancellingOrder}
-        onCancel={() =>
-          setOrderToCancel(null)
-        }
+        onCancel={() => setOrderToCancel(null)}
         onConfirm={cancelOrder}
       />
     </div>

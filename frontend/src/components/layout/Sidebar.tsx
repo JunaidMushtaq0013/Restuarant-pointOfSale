@@ -61,7 +61,13 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
     };
 
     const handleBrandUpdated = (event: Event) => {
-      const detail = (event as CustomEvent<{ restaurantName?: string; logoUrl?: string; initials?: string }>).detail;
+      const detail = (
+        event as CustomEvent<{
+          restaurantName?: string;
+          logoUrl?: string;
+          initials?: string;
+        }>
+      ).detail;
       const initials =
         detail.initials ||
         detail.restaurantName
@@ -220,7 +226,6 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
           Powered by Warisoft
         </p>
       </div>
-
     </aside>
   );
 };

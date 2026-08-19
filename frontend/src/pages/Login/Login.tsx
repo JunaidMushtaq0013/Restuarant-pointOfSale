@@ -37,9 +37,7 @@ const Login = () => {
           ? error.response.data.message
           : "Login failed. Please try again.";
 
-      toast.error(
-        message,
-      );
+      toast.error(message);
     }
   };
 
@@ -99,10 +97,7 @@ const Login = () => {
             />
           </div>
 
-          <button
-            type="submit"
-            className="w-full btn-primary"
-          >
+          <button type="submit" className="w-full btn-primary">
             Login
           </button>
         </form>
