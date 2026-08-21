@@ -12,6 +12,7 @@ import authRoutes from "./features/auth/auth.routes.js";
 import cookieParser from "cookie-parser";
 import tableRoutes from "./features/tables/tables.routes.js";
 import dashboardRoutes from "./features/dashboard/dashboard.routes.js";
+import paymentRoutes from "./features/payments/payments.routes.js";
 import { env } from "./config/env.js"
 
 
@@ -48,6 +49,7 @@ app.use("/api/employees",employeeRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/tables", tableRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/payments", paymentRoutes);
 
 
 app.use(globalErrorHandler);

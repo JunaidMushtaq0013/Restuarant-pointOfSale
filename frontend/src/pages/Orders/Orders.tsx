@@ -358,6 +358,80 @@ const Orders = () => {
     }
   };
 
+///razorpay \
+
+
+const handleOnlinePayment = async (orderId: string) => {
+  try {
+    const response = await api.post(
+      "/payments/razorpay/create-order",
+      {
+        orderId,
+      },
+    );
+
+    const { razorpayOrder } = response.data.data;
+
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      name: "Warisoft POS",
+      description: `Payment for ${razorpayOrder.receipt}`,
+      order_id: razorpayOrder.id,
+
+      handler: async function (response: any) {
+        try {
+          console.log(
+            "Razorpay payment response:",
+            response,
+          );
+
+ const verifyResponse = await api.post(
+  "/payments/razorpay/verify",
+  {
+    razorpayOrderId: response.razorpay_order_id,
+    razorpayPaymentId: response.razorpay_payment_id,
+    razorpaySignature: response.razorpay_signature,
+  },
+);
+
+const updatedOrder = verifyResponse.data.data;
+
+setSelectedOrder(updatedOrder);
+
+await getOrders();
+
+toast.success(
+  "Payment successful and verified.",
+);
+        } catch (error) {
+          console.error(
+            "Payment verification failed:",
+            error,
+          );
+
+          toast.error(
+            "Payment verification failed.",
+          );
+        }
+      },
+
+      theme: {
+        color: "#111827",
+      },
+    };
+
+    const razorpay = new window.Razorpay(options);
+
+    razorpay.open();
+  } catch (error: any) {
+    toast.error(
+      error.response?.data?.message ||
+        "Unable to initiate online payment.",
+    );
+  }
+};
   // =========================
   // Mark As Served
   // =========================
@@ -822,6 +896,7 @@ const Orders = () => {
             setSelectedOrder(null);
           }}
           onMarkAsPaid={markAsPaid}
+          onOnlinePayment={handleOnlinePayment}
           onMarkAsServed={markAsServed}
           onCancelOrder={(order) => setOrderToCancel(order)}
           canCancelOrder={user?.role === "Manager" || user?.role === "Cashier"}

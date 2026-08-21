@@ -41,6 +41,8 @@ export interface OrderType {
 
   grandTotal: number;
 
+  paymentMethod: "Cash" | "Online";
+
   paymentStatus: "Pending" | "Paid" | "Refund Initiated";
 
   status: "Pending" | "Preparing" | "Ready" | "Served" | "Cancelled";
@@ -63,6 +65,8 @@ export interface CreateOrderPayload {
   table?: Types.ObjectId | null;
 
   discountPercentage?: number;
+
+  paymentMethod: "Cash" | "Online";
 
   paymentStatus: "Pending" | "Paid";
 }

@@ -4,6 +4,7 @@ interface ViewOrderModalProps {
   order: Order;
   onClose: () => void;
   onMarkAsPaid: (id: string) => void;
+  onOnlinePayment: (id: string) => void;
   onMarkAsServed: (id: string) => void;
   onCancelOrder: (order: Order) => void;
   canCancelOrder: boolean;
@@ -17,6 +18,7 @@ const ViewOrderModal = ({
   order,
   onClose,
   onMarkAsPaid,
+  onOnlinePayment,
   onMarkAsServed,
   onCancelOrder,
   canCancelOrder,
@@ -297,14 +299,27 @@ const ViewOrderModal = ({
             </button>
 
             {order.paymentStatus === "Pending" && (
-              <button
-                type="button"
-                disabled={paymentLoading}
-                onClick={() => onMarkAsPaid(order._id)}
-                className="w-full min-w-0 rounded-lg bg-green-600 px-2 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 md:w-auto md:px-4 md:text-sm"
-              >
-                {paymentLoading ? "Processing..." : "Mark as Paid"}
-              </button>
+              <div className="flex w-full gap-2 md:w-auto">
+                {/* Cash Payment */}
+                <button
+                  type="button"
+                  disabled={paymentLoading}
+                  onClick={() => onMarkAsPaid(order._id)}
+                  className="flex-1 rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-4 md:text-sm"
+                >
+                  {paymentLoading ? "Processing..." : "Cash"}
+                </button>
+
+                {/* Online Payment */}
+                <button
+                  type="button"
+                  disabled={paymentLoading}
+                  onClick={() => onOnlinePayment(order._id)}
+                  className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-4 md:text-sm"
+                >
+                  Online
+                </button>
+              </div>
             )}
 
             {canMarkAsServed && order.status === "Ready" && (
