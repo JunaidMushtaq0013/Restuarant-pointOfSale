@@ -83,9 +83,8 @@ const NewOrder = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [placingOrder, setPlacingOrder] = useState(false);
 
-
   const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] =
-  useState(false);
+    useState(false);
 
   const getMenu = async () => {
     try {
@@ -343,8 +342,6 @@ const NewOrder = () => {
     } finally {
       setPlacingOrder(false);
     }
-
-    
   };
 
   if (loading) {
@@ -761,108 +758,98 @@ const NewOrder = () => {
         </div>
       )}
 
-
       <PaymentMethodModal
-  isOpen={isPaymentMethodModalOpen}
-  onClose={() => setIsPaymentMethodModalOpen(false)}
-  onCash={() => {
-    setIsPaymentMethodModalOpen(false);
-    placeOrder("Paid");
-  }}
-onOnline={async () => {
-  setIsPaymentMethodModalOpen(false);
+        isOpen={isPaymentMethodModalOpen}
+        onClose={() => setIsPaymentMethodModalOpen(false)}
+        onCash={() => {
+          setIsPaymentMethodModalOpen(false);
+          placeOrder("Paid");
+        }}
+        onOnline={async () => {
+          setIsPaymentMethodModalOpen(false);
 
-  try {
-    const createdOrder = await placeOrder("Pending");
+          try {
+            const createdOrder = await placeOrder("Pending");
 
-    if (!createdOrder) {
-      return;
-    }
+            if (!createdOrder) {
+              return;
+            }
 
-    const razorpayResponse = await api.post(
-      "/payments/razorpay/create-order",
-      {
-        orderId: createdOrder._id,
-      },
-    );
+            const razorpayResponse = await api.post(
+              "/payments/razorpay/create-order",
+              {
+                orderId: createdOrder._id,
+              },
+            );
 
-    const razorpayOrder =
-      razorpayResponse.data.data.razorpayOrder;
+            const razorpayOrder = razorpayResponse.data.data.razorpayOrder;
 
-    console.log(
-      "Razorpay Order:",
-      razorpayOrder,
-    );
+            console.log("Razorpay Order:", razorpayOrder);
 
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: razorpayOrder.amount,
-      currency: razorpayOrder.currency,
-      name: "Warisoft POS",
-      description: `Payment for ${razorpayOrder.receipt}`,
-      order_id: razorpayOrder.id,
+            const options = {
+              key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+              amount: razorpayOrder.amount,
+              currency: razorpayOrder.currency,
+              name: "Warisoft POS",
+              description: `Payment for ${razorpayOrder.receipt}`,
+              order_id: razorpayOrder.id,
 
-    handler: async function (response: any) {
-  try {
-    console.log(
-      "Razorpay payment response:",
-      response,
-    );
+              handler: async function (response: any) {
+                try {
+                  console.log("Razorpay payment response:", response);
 
-    const verifyResponse = await api.post(
-      "/payments/razorpay/verify",
-      {
-        razorpayOrderId:
-          response.razorpay_order_id,
+                  const verifyResponse = await api.post(
+                    "/payments/razorpay/verify",
+                    {
+                      razorpayOrderId: response.razorpay_order_id,
 
-        razorpayPaymentId:
-          response.razorpay_payment_id,
+                      razorpayPaymentId: response.razorpay_payment_id,
 
-        razorpaySignature:
-          response.razorpay_signature,
-      },
-    );
+                      razorpaySignature: response.razorpay_signature,
+                    },
+                  );
 
-    console.log(
-      "Payment verification response:",
-      verifyResponse.data,
-    );
+                  console.log(
+                    "Payment verification response:",
+                    verifyResponse.data,
+                  );
 
-    toast.success(
-      "Payment successful and verified.",
-    );
-  } catch (error) {
-    console.error(
-      "Payment verification failed:",
-      error,
-    );
+                  toast.success("Payment successful and verified.");
+                } catch (error) {
+                  console.error("Payment verification failed:", error);
 
-    toast.error(
-      "Payment verification failed.",
-    );
-  }
-},
+                  toast.error("Payment verification failed.");
+                }
+              },
 
-      theme: {
-        color: "#111827",
-      },
-    };
+              theme: {
+                color: "#111827",
+              },
+            };
 
-    const razorpay = new window.Razorpay(options);
+            const razorpay = new window.Razorpay(options);
 
-    razorpay.open();
-  } catch (error) {
-    console.error(
-      "Online payment failed:",
-      error,
-    );
+            razorpay.on("payment.failed", (response: any) => {
+              console.error("Razorpay payment failed:", response);
 
-    toast.error(
-      "Unable to initiate online payment.",
-    );
-  }
-}}
-/>
+              toast.error(
+                response.error?.description ||
+                  "Payment failed. The order remains pending.",
+              );
+            });
+
+            razorpay.on("modal.closed", () => {
+              toast.info("Payment cancelled. The order remains pending.");
+            });
+
+            razorpay.open();
+          } catch (error) {
+            console.error("Online payment failed:", error);
+
+            toast.error("Unable to initiate online payment.");
+          }
+        }}
+      />
     </div>
   );
 };
