@@ -1,6 +1,6 @@
-# Warisoft POS
+# Restuarant POS
 
-Warisoft POS is a full-stack restaurant point-of-sale system for managing orders, billing, tables, menu items, inventory, customers, employees, and kitchen operations.
+Restuarant POS is a full-stack restaurant point-of-sale system for managing orders, billing, tables, menu items, inventory, customers, employees, and kitchen operations.
 
 ## Features
 
