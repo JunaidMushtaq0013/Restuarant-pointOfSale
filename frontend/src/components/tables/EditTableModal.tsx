@@ -48,20 +48,14 @@ const EditTableModal = ({
       return;
     }
 
-    await onSubmit(
-      table._id,
-      Number(tableNumber),
-      Number(capacity),
-    );
+    await onSubmit(table._id, Number(tableNumber), Number(capacity));
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Edit Table
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900">Edit Table</h2>
 
           <p className="mt-1 text-sm text-gray-500">
             Update the table details.
@@ -113,15 +107,12 @@ const EditTableModal = ({
               onClick={onClose}
               disabled={submitting}
               className="btn-secondary"
+              aria-label="Cancel"
             >
               Cancel
             </button>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn-primary"
-            >
+            <button type="submit" disabled={submitting} className="btn-primary">
               {submitting ? "Updating..." : "Update Table"}
             </button>
           </div>

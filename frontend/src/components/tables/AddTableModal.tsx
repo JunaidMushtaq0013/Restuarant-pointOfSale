@@ -3,10 +3,7 @@ import { useState } from "react";
 interface AddTableModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (
-    tableNumber: number,
-    capacity: number,
-  ) => Promise<void>;
+  onSubmit: (tableNumber: number, capacity: number) => Promise<void>;
   submitting: boolean;
 }
 
@@ -30,10 +27,7 @@ const AddTableModal = ({
       return;
     }
 
-    await onSubmit(
-      Number(tableNumber),
-      Number(capacity),
-    );
+    await onSubmit(Number(tableNumber), Number(capacity));
 
     setTableNumber("");
     setCapacity("");
@@ -49,13 +43,9 @@ const AddTableModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Add Table
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900">Add Table</h2>
 
-          <p className="mt-1 text-sm text-gray-500">
-            Enter the table details.
-          </p>
+          <p className="mt-1 text-sm text-gray-500">Enter the table details.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -108,15 +98,12 @@ const AddTableModal = ({
               onClick={handleClose}
               disabled={submitting}
               className="btn-secondary"
+              aria-label="Cancel"
             >
               Cancel
             </button>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn-primary"
-            >
+            <button type="submit" disabled={submitting} className="btn-primary">
               {submitting ? "Adding..." : "Add Table"}
             </button>
           </div>

@@ -11,11 +11,7 @@ interface EditCategoryModalProps {
   isOpen: boolean;
   category: Category | null;
   onClose: () => void;
-  onSubmit: (
-    id: string,
-    name: string,
-    description: string,
-  ) => Promise<void>;
+  onSubmit: (id: string, name: string, description: string) => Promise<void>;
   submitting: boolean;
 }
 
@@ -47,11 +43,7 @@ const EditCategoryModal = ({
       return;
     }
 
-    await onSubmit(
-      category._id,
-      name.trim(),
-      description.trim(),
-    );
+    await onSubmit(category._id, name.trim(), description.trim());
   };
 
   return (
@@ -59,19 +51,14 @@ const EditCategoryModal = ({
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Edit Category
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900">Edit Category</h2>
 
           <p className="mt-1 text-sm text-gray-500">
             Update the category details.
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-        >
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Name */}
           <div>
             <label
@@ -85,9 +72,7 @@ const EditCategoryModal = ({
               id="editCategoryName"
               type="text"
               value={name}
-              onChange={(e) =>
-                setName(e.target.value)
-              }
+              onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
               required
             />
@@ -105,9 +90,7 @@ const EditCategoryModal = ({
             <textarea
               id="editCategoryDescription"
               value={description}
-              onChange={(e) =>
-                setDescription(e.target.value)
-              }
+              onChange={(e) => setDescription(e.target.value)}
               rows={3}
               className="w-full resize-none rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
             />
@@ -124,11 +107,7 @@ const EditCategoryModal = ({
               Cancel
             </button>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn-primary"
-            >
+            <button type="submit" disabled={submitting} className="btn-primary">
               {submitting ? "Saving..." : "Save Changes"}
             </button>
           </div>

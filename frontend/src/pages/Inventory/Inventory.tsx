@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import AddInventoryModal from "../../components/inventory/AddInventoryModal";
 import EditInventoryModal from "../../components/inventory/EditInventoryModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import ActionIcon from "../../components/common/ActionIcon";
 
 interface InventoryItem {
   _id: string;
@@ -28,9 +29,9 @@ const Inventory = () => {
   const { user } = useAuth();
 
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [inactiveInventory, setInactiveInventory] = useState<
-    InventoryItem[]
-  >([]);
+  const [inactiveInventory, setInactiveInventory] = useState<InventoryItem[]>(
+    [],
+  );
 
   const [loading, setLoading] = useState(true);
   const [loadingInactive, setLoadingInactive] = useState(false);
@@ -282,9 +283,7 @@ const Inventory = () => {
 
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Inventory
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
 
           <p className="mt-1 text-sm text-gray-500">
             Manage restaurant inventory and stock levels.
@@ -298,9 +297,7 @@ const Inventory = () => {
               disabled={loadingInactive}
               className="rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loadingInactive
-                ? "Loading..."
-                : "Inactive Inventory"}
+              {loadingInactive ? "Loading..." : "Inactive Inventory"}
             </button>
 
             <button
@@ -319,9 +316,7 @@ const Inventory = () => {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-500">
-            Total Items
-          </p>
+          <p className="text-sm text-gray-500">Total Items</p>
 
           <p className="mt-2 text-2xl font-bold text-gray-900">
             {pagination.totalItems}
@@ -329,9 +324,7 @@ const Inventory = () => {
         </div>
 
         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-500">
-            Current Page
-          </p>
+          <p className="text-sm text-gray-500">Current Page</p>
 
           <p className="mt-2 text-2xl font-bold text-gray-900">
             {pagination.currentPage}
@@ -343,16 +336,12 @@ const Inventory = () => {
         </div>
 
         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <p className="text-sm text-gray-500">
-            Low Stock
-          </p>
+          <p className="text-sm text-gray-500">Low Stock</p>
 
           <p className="mt-2 text-2xl font-bold text-red-600">
             {
-              inventory.filter(
-                (item) =>
-                  item.quantity <= item.minimumStock,
-              ).length
+              inventory.filter((item) => item.quantity <= item.minimumStock)
+                .length
             }
           </p>
         </div>
@@ -367,34 +356,20 @@ const Inventory = () => {
           <table className="w-full text-left text-sm">
             <thead className="border-b bg-gray-50 text-gray-600">
               <tr>
-                <th className="px-6 py-4 font-medium">
-                  Name
-                </th>
+                <th className="px-6 py-4 font-medium">Name</th>
 
-                <th className="px-6 py-4 font-medium">
-                  Type
-                </th>
+                <th className="px-6 py-4 font-medium">Type</th>
 
-                <th className="px-6 py-4 font-medium">
-                  Quantity
-                </th>
+                <th className="px-6 py-4 font-medium">Quantity</th>
 
-                <th className="px-6 py-4 font-medium">
-                  Minimum Stock
-                </th>
+                <th className="px-6 py-4 font-medium">Minimum Stock</th>
 
-                <th className="px-6 py-4 font-medium">
-                  Buying Price
-                </th>
+                <th className="px-6 py-4 font-medium">Buying Price</th>
 
-                <th className="px-6 py-4 font-medium">
-                  Status
-                </th>
+                <th className="px-6 py-4 font-medium">Status</th>
 
                 {user?.role === "Manager" && (
-                  <th className="px-6 py-4 font-medium">
-                    Actions
-                  </th>
+                  <th className="px-6 py-4 font-medium">Actions</th>
                 )}
               </tr>
             </thead>
@@ -403,9 +378,7 @@ const Inventory = () => {
               {inventory.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={
-                      user?.role === "Manager" ? 7 : 6
-                    }
+                    colSpan={user?.role === "Manager" ? 7 : 6}
                     className="px-6 py-12 text-center text-sm text-gray-500"
                   >
                     No inventory items found.
@@ -413,21 +386,15 @@ const Inventory = () => {
                 </tr>
               ) : (
                 inventory.map((item) => {
-                  const isLowStock =
-                    item.quantity <= item.minimumStock;
+                  const isLowStock = item.quantity <= item.minimumStock;
 
                   return (
-                    <tr
-                      key={item._id}
-                      className="transition hover:bg-gray-50"
-                    >
+                    <tr key={item._id} className="transition hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div>
                           <p className="font-medium text-gray-900">
                             {item.name}
                           </p>
-
-                         
                         </div>
                       </td>
 
@@ -439,14 +406,11 @@ const Inventory = () => {
 
                       <td className="px-6 py-4 font-medium text-gray-900">
                         {item.quantity}{" "}
-                        <span className="text-gray-500">
-                          {item.unit}
-                        </span>
+                        <span className="text-gray-500">{item.unit}</span>
                       </td>
 
                       <td className="px-6 py-4 text-gray-600">
-                        {item.minimumStock}{" "}
-                        {item.unit}
+                        {item.minimumStock} {item.unit}
                       </td>
 
                       <td className="px-6 py-4 font-medium text-gray-900">
@@ -461,9 +425,7 @@ const Inventory = () => {
                               : "bg-green-100 text-green-700"
                           }`}
                         >
-                          {isLowStock
-                            ? "Low Stock"
-                            : "In Stock"}
+                          {isLowStock ? "Low Stock" : "In Stock"}
                         </span>
                       </td>
 
@@ -471,26 +433,18 @@ const Inventory = () => {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <button
-                              onClick={() =>
-                                setSelectedInventory(
-                                  item,
-                                )
-                              }
+                              onClick={() => setSelectedInventory(item)}
                               className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50"
                             >
-                              Edit
+                              <ActionIcon label="Edit" />
                             </button>
 
                             <button
-                              onClick={() =>
-                                setInventoryToDeactivate(
-                                  item,
-                                )
-                              }
+                              onClick={() => setInventoryToDeactivate(item)}
                               disabled={submitting}
                               className="rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                             >
-                              Deactivate
+                              <ActionIcon label="Deactivate" />
                             </button>
                           </div>
                         </td>
@@ -511,14 +465,11 @@ const Inventory = () => {
       <div className="space-y-3 md:hidden">
         {inventory.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-300 bg-white p-10 text-center">
-            <p className="text-sm text-gray-500">
-              No inventory items found.
-            </p>
+            <p className="text-sm text-gray-500">No inventory items found.</p>
           </div>
         ) : (
           inventory.map((item) => {
-            const isLowStock =
-              item.quantity <= item.minimumStock;
+            const isLowStock = item.quantity <= item.minimumStock;
 
             return (
               <div
@@ -545,9 +496,7 @@ const Inventory = () => {
                         : "bg-green-100 text-green-700"
                     }`}
                   >
-                    {isLowStock
-                      ? "Low Stock"
-                      : "In Stock"}
+                    {isLowStock ? "Low Stock" : "In Stock"}
                   </span>
                 </div>
 
@@ -555,9 +504,7 @@ const Inventory = () => {
 
                 <div className="mt-4 grid grid-cols-2 gap-3">
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs text-gray-500">
-                      Quantity
-                    </p>
+                    <p className="text-xs text-gray-500">Quantity</p>
 
                     <p className="mt-1 font-semibold text-gray-900">
                       {item.quantity} {item.unit}
@@ -565,20 +512,15 @@ const Inventory = () => {
                   </div>
 
                   <div className="rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs text-gray-500">
-                      Minimum Stock
-                    </p>
+                    <p className="text-xs text-gray-500">Minimum Stock</p>
 
                     <p className="mt-1 font-semibold text-gray-900">
-                      {item.minimumStock}{" "}
-                      {item.unit}
+                      {item.minimumStock} {item.unit}
                     </p>
                   </div>
 
                   <div className="col-span-2 rounded-lg bg-gray-50 p-3">
-                    <p className="text-xs text-gray-500">
-                      Buying Price
-                    </p>
+                    <p className="text-xs text-gray-500">Buying Price</p>
 
                     <p className="mt-1 font-semibold text-gray-900">
                       ₹{item.buyingPrice.toFixed(2)}
@@ -591,22 +533,18 @@ const Inventory = () => {
                 {user?.role === "Manager" && (
                   <div className="mt-4 flex gap-2 border-t border-gray-100 pt-4">
                     <button
-                      onClick={() =>
-                        setSelectedInventory(item)
-                      }
+                      onClick={() => setSelectedInventory(item)}
                       className="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
                     >
-                      Edit
+                      <ActionIcon label="Edit" />
                     </button>
 
                     <button
-                      onClick={() =>
-                        setInventoryToDeactivate(item)
-                      }
+                      onClick={() => setInventoryToDeactivate(item)}
                       disabled={submitting}
                       className="flex-1 rounded-lg border border-red-200 px-3 py-2.5 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
                     >
-                      Deactivate
+                      <ActionIcon label="Deactivate" />
                     </button>
                   </div>
                 )}
@@ -649,9 +587,7 @@ const Inventory = () => {
 
               <button
                 onClick={() => goToPage(page + 1)}
-                disabled={
-                  page === pagination.totalPages
-                }
+                disabled={page === pagination.totalPages}
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
@@ -692,21 +628,13 @@ const Inventory = () => {
             <table className="w-full text-left text-sm">
               <thead className="border-b bg-gray-50 text-gray-600">
                 <tr>
-                  <th className="px-6 py-4 font-medium">
-                    Name
-                  </th>
+                  <th className="px-6 py-4 font-medium">Name</th>
 
-                  <th className="px-6 py-4 font-medium">
-                    Type
-                  </th>
+                  <th className="px-6 py-4 font-medium">Type</th>
 
-                  <th className="px-6 py-4 font-medium">
-                    Unit
-                  </th>
+                  <th className="px-6 py-4 font-medium">Unit</th>
 
-                  <th className="px-6 py-4 font-medium">
-                    Action
-                  </th>
+                  <th className="px-6 py-4 font-medium">Action</th>
                 </tr>
               </thead>
 
@@ -722,10 +650,7 @@ const Inventory = () => {
                   </tr>
                 ) : (
                   inactiveInventory.map((item) => (
-                    <tr
-                      key={item._id}
-                      className="hover:bg-gray-50"
-                    >
+                    <tr key={item._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 font-medium text-gray-900">
                         {item.name}
                       </td>
@@ -734,15 +659,11 @@ const Inventory = () => {
                         {item.itemType}
                       </td>
 
-                      <td className="px-6 py-4 text-gray-600">
-                        {item.unit}
-                      </td>
+                      <td className="px-6 py-4 text-gray-600">{item.unit}</td>
 
                       <td className="px-6 py-4">
                         <button
-                          onClick={() =>
-                            activateInventory(item._id)
-                          }
+                          onClick={() => activateInventory(item._id)}
                           disabled={submitting}
                           className="rounded-lg border border-green-200 px-3 py-2 text-sm font-medium text-green-600 hover:bg-green-50 disabled:opacity-50"
                         >
@@ -786,9 +707,7 @@ const Inventory = () => {
                   </div>
 
                   <button
-                    onClick={() =>
-                      activateInventory(item._id)
-                    }
+                    onClick={() => activateInventory(item._id)}
                     disabled={submitting}
                     className="mt-4 w-full rounded-lg border border-green-200 bg-white px-3 py-2.5 text-sm font-medium text-green-600 hover:bg-green-50 disabled:opacity-50"
                   >
@@ -831,17 +750,13 @@ const Inventory = () => {
         confirmText="Deactivate"
         cancelText="Cancel"
         loading={submitting}
-        onCancel={() =>
-          setInventoryToDeactivate(null)
-        }
+        onCancel={() => setInventoryToDeactivate(null)}
         onConfirm={async () => {
           if (!inventoryToDeactivate) {
             return;
           }
 
-          await deactivateInventory(
-            inventoryToDeactivate._id,
-          );
+          await deactivateInventory(inventoryToDeactivate._id);
         }}
       />
     </div>

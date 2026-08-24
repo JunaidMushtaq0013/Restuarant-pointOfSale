@@ -4,6 +4,7 @@ import AddMenuModal from "../../components/menu/AddMenuModal";
 import EditMenuModal from "../../components/menu/EditMenuModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import { useAuth } from "../../context/AuthContext";
+import ActionIcon from "../../components/common/ActionIcon";
 
 interface Category {
   _id: string;
@@ -52,8 +53,9 @@ const Menu = () => {
 
   const itemsPerPage = 10;
 
-  const [selectedMenuItem, setSelectedMenuItem] =
-    useState<MenuItem | null>(null);
+  const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(
+    null,
+  );
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editSubmitting, setEditSubmitting] = useState(false);
@@ -61,9 +63,9 @@ const Menu = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [confirmLoading, setConfirmLoading] = useState(false);
 
-  const [actionType, setActionType] = useState<
-    "toggle" | "delete" | null
-  >(null);
+  const [actionType, setActionType] = useState<"toggle" | "delete" | null>(
+    null,
+  );
 
   const isManager = user?.role === "Manager";
 
@@ -212,9 +214,7 @@ const Menu = () => {
     try {
       setConfirmLoading(true);
 
-      await api.patch(
-        `/menu/${selectedMenuItem._id}/toggle-active`,
-      );
+      await api.patch(`/menu/${selectedMenuItem._id}/toggle-active`);
 
       setIsConfirmModalOpen(false);
       setSelectedMenuItem(null);
@@ -328,9 +328,7 @@ const Menu = () => {
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Menu
-          </h1>
+          <h1 className="text-2xl font-bold text-gray-900">Menu</h1>
 
           <p className="mt-1 text-sm text-gray-500">
             Manage your restaurant menu items
@@ -367,25 +365,17 @@ const Menu = () => {
           <table className="w-full min-w-[800px] text-left text-sm">
             <thead className="border-b bg-gray-50">
               <tr>
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Name
-                </th>
+                <th className="px-6 py-4 font-medium text-gray-600">Name</th>
 
                 <th className="px-6 py-4 font-medium text-gray-600">
                   Category
                 </th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Type
-                </th>
+                <th className="px-6 py-4 font-medium text-gray-600">Type</th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Price
-                </th>
+                <th className="px-6 py-4 font-medium text-gray-600">Price</th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Status
-                </th>
+                <th className="px-6 py-4 font-medium text-gray-600">Status</th>
 
                 {isManager && (
                   <th className="px-6 py-4 text-right font-medium text-gray-600">
@@ -398,10 +388,7 @@ const Menu = () => {
             <tbody className="divide-y">
               {filteredMenu.length > 0 ? (
                 filteredMenu.map((item) => (
-                  <tr
-                    key={item._id}
-                    className="hover:bg-gray-50"
-                  >
+                  <tr key={item._id} className="hover:bg-gray-50">
                     {/* Name */}
 
                     <td className="px-6 py-4">
@@ -468,9 +455,7 @@ const Menu = () => {
                             : "bg-gray-100 text-gray-600"
                         }`}
                       >
-                        {item.isActive
-                          ? "Active"
-                          : "Inactive"}
+                        {item.isActive ? "Active" : "Inactive"}
                       </span>
                     </td>
 
@@ -487,33 +472,29 @@ const Menu = () => {
                             }}
                             className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                           >
-                            Edit
+                            <ActionIcon label="Edit" />
                           </button>
 
                           <button
                             type="button"
-                            onClick={() =>
-                              openToggleConfirmation(item)
-                            }
+                            onClick={() => openToggleConfirmation(item)}
                             className={`rounded-lg border px-3 py-2 text-sm font-medium ${
                               item.isActive
                                 ? "border-red-200 text-red-600 hover:bg-red-50"
                                 : "border-green-200 text-green-600 hover:bg-green-50"
                             }`}
                           >
-                            {item.isActive
-                              ? "Deactivate"
-                              : "Activate"}
+                            <ActionIcon
+                              label={item.isActive ? "Deactivate" : "Activate"}
+                            />
                           </button>
 
                           <button
                             type="button"
-                            onClick={() =>
-                              openDeleteConfirmation(item)
-                            }
+                            onClick={() => openDeleteConfirmation(item)}
                             className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
                           >
-                            Delete
+                            <ActionIcon label="Delete" />
                           </button>
                         </div>
                       </td>
@@ -560,9 +541,7 @@ const Menu = () => {
                 )}
 
                 <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-gray-900">
-                    {item.name}
-                  </h3>
+                  <h3 className="font-semibold text-gray-900">{item.name}</h3>
 
                   {item.description && (
                     <p className="mt-1 line-clamp-2 text-xs text-gray-500">
@@ -576,9 +555,7 @@ const Menu = () => {
 
               <div className="mt-4 grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
                 <div>
-                  <p className="text-xs text-gray-500">
-                    Category
-                  </p>
+                  <p className="text-xs text-gray-500">Category</p>
 
                   <p className="mt-1 text-sm font-medium text-gray-900">
                     {item.category?.name || "—"}
@@ -586,9 +563,7 @@ const Menu = () => {
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-500">
-                    Price
-                  </p>
+                  <p className="text-xs text-gray-500">Price</p>
 
                   <p className="mt-1 text-sm font-semibold text-gray-900">
                     ₹{Number(item.sellingPrice).toFixed(2)}
@@ -596,9 +571,7 @@ const Menu = () => {
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-500">
-                    Type
-                  </p>
+                  <p className="text-xs text-gray-500">Type</p>
 
                   <div className="mt-1">
                     <span
@@ -614,9 +587,7 @@ const Menu = () => {
                 </div>
 
                 <div>
-                  <p className="text-xs text-gray-500">
-                    Status
-                  </p>
+                  <p className="text-xs text-gray-500">Status</p>
 
                   <div className="mt-1">
                     <span
@@ -626,9 +597,7 @@ const Menu = () => {
                           : "bg-gray-100 text-gray-600"
                       }`}
                     >
-                      {item.isActive
-                        ? "Active"
-                        : "Inactive"}
+                      {item.isActive ? "Active" : "Inactive"}
                     </span>
                   </div>
                 </div>
@@ -646,33 +615,29 @@ const Menu = () => {
                     }}
                     className="rounded-lg border border-gray-300 px-2 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
                   >
-                    Edit
+                    <ActionIcon label="Edit" />
                   </button>
 
                   <button
                     type="button"
-                    onClick={() =>
-                      openToggleConfirmation(item)
-                    }
+                    onClick={() => openToggleConfirmation(item)}
                     className={`rounded-lg border px-2 py-2 text-xs font-medium ${
                       item.isActive
                         ? "border-red-200 text-red-600 hover:bg-red-50"
                         : "border-green-200 text-green-600 hover:bg-green-50"
                     }`}
                   >
-                    {item.isActive
-                      ? "Deactivate"
-                      : "Activate"}
+                    <ActionIcon
+                      label={item.isActive ? "Deactivate" : "Activate"}
+                    />
                   </button>
 
                   <button
                     type="button"
-                    onClick={() =>
-                      openDeleteConfirmation(item)
-                    }
+                    onClick={() => openDeleteConfirmation(item)}
                     className="rounded-lg border border-red-200 px-2 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
                   >
-                    Delete
+                    <ActionIcon label="Delete" />
                   </button>
                 </div>
               )}
@@ -692,22 +657,13 @@ const Menu = () => {
           <p className="text-center text-sm text-gray-500 sm:text-left">
             Showing{" "}
             <span className="font-medium text-gray-700">
-              {Math.min(
-                (currentPage - 1) * itemsPerPage + 1,
-                totalItems,
-              )}
+              {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}
             </span>{" "}
             to{" "}
             <span className="font-medium text-gray-700">
-              {Math.min(
-                currentPage * itemsPerPage,
-                totalItems,
-              )}
+              {Math.min(currentPage * itemsPerPage, totalItems)}
             </span>{" "}
-            of{" "}
-            <span className="font-medium text-gray-700">
-              {totalItems}
-            </span>{" "}
+            of <span className="font-medium text-gray-700">{totalItems}</span>{" "}
             items
           </p>
 
@@ -717,9 +673,7 @@ const Menu = () => {
             <button
               type="button"
               disabled={currentPage === 1 || loading}
-              onClick={() =>
-                goToPage(currentPage - 1)
-              }
+              onClick={() => goToPage(currentPage - 1)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Previous
@@ -728,10 +682,7 @@ const Menu = () => {
             {/* Page Numbers */}
 
             <div className="flex items-center gap-1">
-              {Array.from(
-                { length: totalPages },
-                (_, index) => index + 1,
-              )
+              {Array.from({ length: totalPages }, (_, index) => index + 1)
                 .filter((page) => {
                   if (totalPages <= 5) {
                     return true;
@@ -741,35 +692,22 @@ const Menu = () => {
                     return true;
                   }
 
-                  return (
-                    page >= currentPage - 1 &&
-                    page <= currentPage + 1
-                  );
+                  return page >= currentPage - 1 && page <= currentPage + 1;
                 })
                 .map((page, index, pages) => {
-                  const previousPage =
-                    pages[index - 1];
+                  const previousPage = pages[index - 1];
 
-                  const showDots =
-                    previousPage &&
-                    page - previousPage > 1;
+                  const showDots = previousPage && page - previousPage > 1;
 
                   return (
-                    <div
-                      key={page}
-                      className="flex items-center gap-1"
-                    >
+                    <div key={page} className="flex items-center gap-1">
                       {showDots && (
-                        <span className="px-1 text-gray-400">
-                          ...
-                        </span>
+                        <span className="px-1 text-gray-400">...</span>
                       )}
 
                       <button
                         type="button"
-                        onClick={() =>
-                          goToPage(page)
-                        }
+                        onClick={() => goToPage(page)}
                         disabled={loading}
                         className={`min-w-9 rounded-lg px-3 py-2 text-sm font-medium ${
                           currentPage === page
@@ -788,13 +726,8 @@ const Menu = () => {
 
             <button
               type="button"
-              disabled={
-                currentPage === totalPages ||
-                loading
-              }
-              onClick={() =>
-                goToPage(currentPage + 1)
-              }
+              disabled={currentPage === totalPages || loading}
+              onClick={() => goToPage(currentPage + 1)}
               className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Next

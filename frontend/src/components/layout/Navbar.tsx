@@ -16,9 +16,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
       try {
         const response = await api.get("/settings");
 
-        setRestaurantName(
-          response.data.data.restaurantName || "Warisoft POS",
-        );
+        setRestaurantName(response.data.data.restaurantName || "Warisoft POS");
       } catch (error) {
         console.error("Failed to load restaurant name:", error);
       }
@@ -37,10 +35,7 @@ const Navbar = ({ onMenuClick }: NavbarProps) => {
     window.addEventListener("settings-updated", handleSettingsUpdated);
 
     return () => {
-      window.removeEventListener(
-        "settings-updated",
-        handleSettingsUpdated,
-      );
+      window.removeEventListener("settings-updated", handleSettingsUpdated);
     };
   }, []);
 

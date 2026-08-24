@@ -1,21 +1,40 @@
-import {Request, Response, NextFunction} from "express";
-import { cancelOrderService, createOrderService, getAllOrdersService, getOrderByIdService, updateOrderStatusService, updatePaymentStatusService } from "./orders.service.js";
+import { Request, Response, NextFunction } from "express";
+import {
+  cancelOrderService,
+  createOrderService,
+  getAllOrdersService,
+  getOrderByIdService,
+  updateOrderStatusService,
+  updatePaymentStatusService,
+} from "./orders.service.js";
 
-export const createOrderController = async (req: Request, res: Response, next: NextFunction) => {
-   try{
-      const payload = req.body;
+export const createOrderController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const payload = {
+      ...req.body,
+      discountPercentage:
+        req.user.role === "Cashier" || req.user.role === "Manager"
+          ? (req.body.discountPercentage ?? 0)
+          : 0,
+      paymentStatus:
+        req.user.role === "Waiter" ? "Pending" : req.body.paymentStatus,
+    };
 
-      const order = await createOrderService(payload);
+    const order = await createOrderService(payload);
 
-      res.status(201).json({
-         status:"success",
-         message:"Order created successfully",
-         data:order
-      });
-   }catch(error){
-      next(error);
-   }
-}
+    res.status(201).json({
+      status: "success",
+      message: "Order created successfully",
+      data: order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const getAllOrdersController = async (
   req: Request,
@@ -27,15 +46,9 @@ export const getAllOrdersController = async (
     const limit = Number(req.query.limit) || 10;
 
     const status =
-      typeof req.query.status === "string"
-        ? req.query.status
-        : undefined;
+      typeof req.query.status === "string" ? req.query.status : undefined;
 
-    const result = await getAllOrdersService(
-      page,
-      limit,
-      status,
-    );
+    const result = await getAllOrdersService(page, limit, status);
 
     res.status(200).json({
       status: "success",
@@ -51,7 +64,7 @@ export const getAllOrdersController = async (
 export const getOrderByIdController = async (
   req: Request<{ id: string }>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const order = await getOrderByIdService(req.params.id);
@@ -66,16 +79,15 @@ export const getOrderByIdController = async (
   }
 };
 
-
 export const updateOrderStatusController = async (
   req: Request<{ id: string }>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const order = await updateOrderStatusService(
       req.params.id,
-      req.body.status
+      req.body.status,
     );
 
     res.status(200).json({
@@ -88,17 +100,18 @@ export const updateOrderStatusController = async (
   }
 };
 
-
-
 export const updatePaymentStatusController = async (
   req: Request<{ id: string }>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const order = await updatePaymentStatusService(
       req.params.id,
-      req.body.paymentStatus
+      req.body.paymentStatus,
+      req.user.role === "Cashier" || req.user.role === "Manager"
+        ? req.body.discountPercentage
+        : undefined,
     );
 
     res.status(200).json({
@@ -113,7 +126,7 @@ export const updatePaymentStatusController = async (
 
 export const cancelOrderController = async (
   req: Request<{ id: string }>,
-  res: Response
+  res: Response,
 ) => {
   const order = await cancelOrderService(req.params.id);
 
@@ -123,4 +136,3 @@ export const cancelOrderController = async (
     data: order,
   });
 };
-

@@ -131,15 +131,15 @@ const EditMenuModal = ({
     }
 
     onSubmit(
-  menuItem._id,
-  name.trim(),
-  description.trim(),
-  category,
-  inventory,
-  Number(sellingPrice),
-  type,
-  image,
-);
+      menuItem._id,
+      name.trim(),
+      description.trim(),
+      category,
+      inventory,
+      Number(sellingPrice),
+      type,
+      image,
+    );
   };
 
   return (

@@ -1,6 +1,7 @@
 import Razorpay from "razorpay";
-import crypto from "crypto"
+import crypto from "crypto";
 import { Order } from "../orders/orders.model.js";
+import { applyPaymentDiscount } from "../orders/orders.service.js";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
@@ -9,6 +10,7 @@ const razorpay = new Razorpay({
 
 export const createRazorpayOrderService = async (
   orderId: string,
+  discountPercentage?: number,
 ) => {
   const order = await Order.findById(orderId);
 
@@ -22,6 +24,11 @@ export const createRazorpayOrderService = async (
 
   if (order.grandTotal <= 0) {
     throw new Error("Order amount must be greater than zero.");
+  }
+
+  if (discountPercentage !== undefined) {
+    applyPaymentDiscount(order, discountPercentage);
+    await order.save();
   }
 
   const razorpayOrder = await razorpay.orders.create({
@@ -45,43 +52,30 @@ export const verifyRazorpayPaymentService = async (
   razorpayPaymentId: string,
   razorpaySignature: string,
 ) => {
-  const body =
-    razorpayOrderId + "|" + razorpayPaymentId;
+  const body = razorpayOrderId + "|" + razorpayPaymentId;
 
   // 1. Verify Razorpay signature
   const expectedSignature = crypto
-    .createHmac(
-      "sha256",
-      process.env.RAZORPAY_KEY_SECRET!,
-    )
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
     .update(body)
     .digest("hex");
 
   if (expectedSignature !== razorpaySignature) {
-    throw new Error(
-      "Invalid Razorpay payment signature.",
-    );
+    throw new Error("Invalid Razorpay payment signature.");
   }
 
   // 2. Fetch the Razorpay order
-  const razorpayOrder =
-    await razorpay.orders.fetch(
-      razorpayOrderId,
-    );
+  const razorpayOrder = await razorpay.orders.fetch(razorpayOrderId);
 
   // 3. Get our POS order ID from Razorpay notes
-  const orderId =
-    razorpayOrder.notes?.orderId;
+  const orderId = razorpayOrder.notes?.orderId;
 
   if (!orderId) {
-    throw new Error(
-      "POS order ID not found in Razorpay order.",
-    );
+    throw new Error("POS order ID not found in Razorpay order.");
   }
 
   // 4. Find the POS order
-  const order =
-    await Order.findById(orderId);
+  const order = await Order.findById(orderId);
 
   if (!order) {
     throw new Error("Order not found.");
@@ -89,26 +83,17 @@ export const verifyRazorpayPaymentService = async (
 
   // 5. Make sure this Razorpay order belongs
   //    to the POS order we found
-  if (
-    razorpayOrder.notes?.orderId !==
-    order._id.toString()
-  ) {
-    throw new Error(
-      "Razorpay order does not belong to this POS order.",
-    );
+  if (razorpayOrder.notes?.orderId !== order._id.toString()) {
+    throw new Error("Razorpay order does not belong to this POS order.");
   }
 
   // 6. Verify the amount
-  const razorpayAmount =
-    Number(razorpayOrder.amount);
+  const razorpayAmount = Number(razorpayOrder.amount);
 
-  const expectedAmount =
-    Math.round(order.grandTotal * 100);
+  const expectedAmount = Math.round(order.grandTotal * 100);
 
   if (razorpayAmount !== expectedAmount) {
-    throw new Error(
-      "Razorpay payment amount does not match the order amount.",
-    );
+    throw new Error("Razorpay payment amount does not match the order amount.");
   }
 
   // 7. Prevent duplicate processing

@@ -4,7 +4,6 @@ import {
   verifyRazorpayPaymentService,
 } from "./payments.service.js";
 
-
 export const createRazorpayOrderController = async (
   req: Request,
   res: Response,
@@ -20,8 +19,12 @@ export const createRazorpayOrderController = async (
       });
     }
 
-    const result =
-      await createRazorpayOrderService(orderId);
+    const result = await createRazorpayOrderService(
+      orderId,
+      req.user.role === "Cashier" || req.user.role === "Manager"
+        ? req.body.discountPercentage
+        : undefined,
+    );
 
     res.status(201).json({
       status: "success",
@@ -36,26 +39,19 @@ export const createRazorpayOrderController = async (
   }
 };
 
-
-
 export const verifyRazorpayPaymentController = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   try {
-    const {
+    const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+
+    const order = await verifyRazorpayPaymentService(
       razorpayOrderId,
       razorpayPaymentId,
       razorpaySignature,
-    } = req.body;
-
-    const order =
-      await verifyRazorpayPaymentService(
-        razorpayOrderId,
-        razorpayPaymentId,
-        razorpaySignature,
-      );
+    );
 
     res.status(200).json({
       status: "success",

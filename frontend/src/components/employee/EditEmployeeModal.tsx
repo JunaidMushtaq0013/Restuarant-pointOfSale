@@ -33,9 +33,9 @@ const EditEmployeeModal = ({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState<
-    "Manager" | "Cashier" | "Chef" | "Waiter"
-  >("Cashier");
+  const [role, setRole] = useState<"Manager" | "Cashier" | "Chef" | "Waiter">(
+    "Cashier",
+  );
 
   useEffect(() => {
     if (employee) {
@@ -50,26 +50,14 @@ const EditEmployeeModal = ({
     return null;
   }
 
-  const handleSubmit = async (
-    e: React.FormEvent,
-  ) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !name.trim() ||
-      !email.trim() ||
-      !phone.trim()
-    ) {
+    if (!name.trim() || !email.trim() || !phone.trim()) {
       return;
     }
 
-    await onSubmit(
-      employee._id,
-      name.trim(),
-      email.trim(),
-      phone.trim(),
-      role,
-    );
+    await onSubmit(employee._id, name.trim(), email.trim(), phone.trim(), role);
   };
 
   return (
@@ -77,19 +65,14 @@ const EditEmployeeModal = ({
       <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Edit Employee
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-900">Edit Employee</h2>
 
           <p className="mt-1 text-sm text-gray-500">
             Update employee information and role.
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-        >
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Name */}
           <div>
             <label
@@ -103,9 +86,7 @@ const EditEmployeeModal = ({
               id="editEmployeeName"
               type="text"
               value={name}
-              onChange={(e) =>
-                setName(e.target.value)
-              }
+              onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
               required
             />
@@ -124,9 +105,7 @@ const EditEmployeeModal = ({
               id="editEmployeeEmail"
               type="email"
               value={email}
-              onChange={(e) =>
-                setEmail(e.target.value)
-              }
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
               required
             />
@@ -145,9 +124,7 @@ const EditEmployeeModal = ({
               id="editEmployeePhone"
               type="tel"
               value={phone}
-              onChange={(e) =>
-                setPhone(e.target.value)
-              }
+              onChange={(e) => setPhone(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
               required
             />
@@ -167,30 +144,18 @@ const EditEmployeeModal = ({
               value={role}
               onChange={(e) =>
                 setRole(
-                  e.target.value as
-                    | "Manager"
-                    | "Cashier"
-                    | "Chef"
-                    | "Waiter",
+                  e.target.value as "Manager" | "Cashier" | "Chef" | "Waiter",
                 )
               }
               className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
             >
-              <option value="Manager">
-                Manager
-              </option>
+              <option value="Manager">Manager</option>
 
-              <option value="Cashier">
-                Cashier
-              </option>
+              <option value="Cashier">Cashier</option>
 
-              <option value="Chef">
-                Chef
-              </option>
+              <option value="Chef">Chef</option>
 
-              <option value="Waiter">
-                Waiter
-              </option>
+              <option value="Waiter">Waiter</option>
             </select>
           </div>
 
@@ -205,14 +170,8 @@ const EditEmployeeModal = ({
               Cancel
             </button>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn-primary"
-            >
-              {submitting
-                ? "Saving..."
-                : "Save Changes"}
+            <button type="submit" disabled={submitting} className="btn-primary">
+              {submitting ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

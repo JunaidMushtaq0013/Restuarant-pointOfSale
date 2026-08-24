@@ -10,12 +10,7 @@ interface CustomerOrder {
   orderNumber: string;
   grandTotal: number;
   paymentStatus: "Pending" | "Paid" | "Refund Initiated";
-  status:
-    | "Pending"
-    | "Preparing"
-    | "Ready"
-    | "Served"
-    | "Cancelled";
+  status: "Pending" | "Preparing" | "Ready" | "Served" | "Cancelled";
   orderType: "Dine In" | "Takeaway";
   createdAt: string;
 }
@@ -94,9 +89,7 @@ const CustomerDetailsModal = ({
         {/* Statistics */}
         <div className="grid grid-cols-2 gap-4 p-6 md:grid-cols-3">
           <div className="rounded-xl bg-gray-50 p-4">
-            <p className="text-sm text-gray-500">
-              Total Orders
-            </p>
+            <p className="text-sm text-gray-500">Total Orders</p>
 
             <p className="mt-1 text-2xl font-bold text-gray-900">
               {orders.length}
@@ -104,9 +97,7 @@ const CustomerDetailsModal = ({
           </div>
 
           <div className="rounded-xl bg-gray-50 p-4">
-            <p className="text-sm text-gray-500">
-              Total Spent
-            </p>
+            <p className="text-sm text-gray-500">Total Spent</p>
 
             <p className="mt-1 text-2xl font-bold text-gray-900">
               ₹{totalSpent.toFixed(2)}
@@ -114,15 +105,11 @@ const CustomerDetailsModal = ({
           </div>
 
           <div className="rounded-xl bg-gray-50 p-4">
-            <p className="text-sm text-gray-500">
-              Last Order
-            </p>
+            <p className="text-sm text-gray-500">Last Order</p>
 
             <p className="mt-1 text-sm font-semibold text-gray-900">
               {orders.length > 0
-                ? new Date(
-                    orders[0].createdAt,
-                  ).toLocaleDateString()
+                ? new Date(orders[0].createdAt).toLocaleDateString()
                 : "No orders"}
             </p>
           </div>
@@ -148,29 +135,17 @@ const CustomerDetailsModal = ({
                 <table className="w-full text-left text-sm">
                   <thead className="bg-gray-50 text-gray-600">
                     <tr>
-                      <th className="px-4 py-3 font-medium">
-                        Order
-                      </th>
+                      <th className="px-4 py-3 font-medium">Order</th>
 
-                      <th className="px-4 py-3 font-medium">
-                        Date
-                      </th>
+                      <th className="px-4 py-3 font-medium">Date</th>
 
-                      <th className="px-4 py-3 font-medium">
-                        Type
-                      </th>
+                      <th className="px-4 py-3 font-medium">Type</th>
 
-                      <th className="px-4 py-3 font-medium">
-                        Total
-                      </th>
+                      <th className="px-4 py-3 font-medium">Total</th>
 
-                      <th className="px-4 py-3 font-medium">
-                        Payment
-                      </th>
+                      <th className="px-4 py-3 font-medium">Payment</th>
 
-                      <th className="px-4 py-3 font-medium">
-                        Status
-                      </th>
+                      <th className="px-4 py-3 font-medium">Status</th>
                     </tr>
                   </thead>
 
@@ -182,9 +157,7 @@ const CustomerDetailsModal = ({
                         </td>
 
                         <td className="px-4 py-3 text-gray-600">
-                          {new Date(
-                            order.createdAt,
-                          ).toLocaleDateString()}
+                          {new Date(order.createdAt).toLocaleDateString()}
                         </td>
 
                         <td className="px-4 py-3 text-gray-600">
@@ -225,10 +198,7 @@ const CustomerDetailsModal = ({
 
         {/* Footer */}
         <div className="flex justify-end border-t px-6 py-4">
-          <button
-            onClick={onClose}
-            className="btn-primary"
-          >
+          <button onClick={onClose} className="btn-primary">
             Close
           </button>
         </div>

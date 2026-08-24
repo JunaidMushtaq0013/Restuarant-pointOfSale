@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../../api/axious";
 import { toast } from "react-toastify";
 import PaymentMethodModal from "../../components/orders/PaymentMethodModal";
+import { useAuth } from "../../context/AuthContext";
 
 interface Category {
   _id: string;
@@ -55,15 +56,21 @@ interface Customer {
 interface OrderSettings {
   gstPercentage: number;
   serviceChargePercentage: number;
+  openingTime: string;
+  closingTime: string;
 }
 
 const NewOrder = () => {
+  const { user } = useAuth();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [discountPercentage, setDiscountPercentage] = useState(0);
   const [orderSettings, setOrderSettings] = useState<OrderSettings>({
     gstPercentage: 0,
     serviceChargePercentage: 0,
+    openingTime: "09:00",
+    closingTime: "22:00",
   });
 
   const [search, setSearch] = useState("");
@@ -198,9 +205,10 @@ const NewOrder = () => {
     try {
       const response = await api.get("/settings");
       setOrderSettings({
-        gstPercentage: response.data.data.gstPercentage ?? 0,
-        serviceChargePercentage:
-          response.data.data.serviceChargePercentage ?? 0,
+        gstPercentage: response.data.data.gstPercentage,
+        serviceChargePercentage: response.data.data.serviceChargePercentage,
+        openingTime: response.data.data.openingTime,
+        closingTime: response.data.data.closingTime,
       });
     } catch (error) {
       console.error("Failed to load billing settings:", error);
@@ -277,10 +285,35 @@ const NewOrder = () => {
     (total, item) => total + item.menu.sellingPrice * item.quantity,
     0,
   );
-  const gstAmount = (subtotal * orderSettings.gstPercentage) / 100;
+  const discountAmount = (subtotal * discountPercentage) / 100;
+  const totalAfterDiscount = subtotal - discountAmount;
+
+  const gstAmount = (totalAfterDiscount * orderSettings.gstPercentage) / 100;
+
   const serviceChargeAmount =
-    (subtotal * orderSettings.serviceChargePercentage) / 100;
-  const orderTotal = subtotal + gstAmount + serviceChargeAmount;
+    (totalAfterDiscount * orderSettings.serviceChargePercentage) / 100;
+
+  const orderTotal = totalAfterDiscount + gstAmount + serviceChargeAmount;
+
+  const isRestaurantOpen = () => {
+    const now = new Date();
+
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const [openingHour, openingMinute] = orderSettings.openingTime
+      .split(":")
+      .map(Number);
+
+    const [closingHour, closingMinute] = orderSettings.closingTime
+      .split(":")
+      .map(Number);
+
+    const openingMinutes = openingHour * 60 + openingMinute;
+
+    const closingMinutes = closingHour * 60 + closingMinute;
+
+    return currentMinutes >= openingMinutes && currentMinutes <= closingMinutes;
+  };
 
   const placeOrder = async (paymentStatus: "Paid" | "Pending") => {
     if (cart.length === 0) {
@@ -313,7 +346,10 @@ const NewOrder = () => {
 
         customerPhone: customerPhone.trim() || undefined,
 
-        discountPercentage: 0,
+        discountPercentage:
+          user?.role === "Cashier" || user?.role === "Manager"
+            ? discountPercentage
+            : 0,
 
         paymentStatus,
       };
@@ -327,6 +363,7 @@ const NewOrder = () => {
       setCustomerName("");
       setCustomerPhone("");
       setMatchedCustomer(null);
+      setDiscountPercentage(0);
       setOrderType("Dine In");
       setShowPaymentModal(false);
       await getTables();
@@ -660,12 +697,46 @@ const NewOrder = () => {
 
         {/* Billing */}
         <div className="shrink-0 border-t p-5">
+          {/* Subtotal */}
           <div className="flex justify-between text-sm">
             <span className="text-gray-500">Subtotal</span>
 
             <span className="font-medium">₹{subtotal.toFixed(2)}</span>
           </div>
 
+          {(user?.role === "Cashier" || user?.role === "Manager") && (
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Discount (%)
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="10"
+                step="0.01"
+                value={discountPercentage}
+                onChange={(event) =>
+                  setDiscountPercentage(
+                    Math.min(10, Math.max(0, Number(event.target.value))),
+                  )
+                }
+                className="mt-2 w-full border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-gray-900"
+              />
+            </div>
+          )}
+
+          {discountPercentage > 0 && (
+            <div className="mt-2 flex justify-between text-sm">
+              <span className="text-gray-500">
+                Discount ({discountPercentage}%)
+              </span>
+              <span className="font-medium text-red-600">
+                -₹{discountAmount.toFixed(2)}
+              </span>
+            </div>
+          )}
+
+          {/* GST */}
           <div className="mt-2 flex justify-between text-sm">
             <span className="text-gray-500">
               GST ({orderSettings.gstPercentage}%)
@@ -674,6 +745,7 @@ const NewOrder = () => {
             <span className="font-medium">₹{gstAmount.toFixed(2)}</span>
           </div>
 
+          {/* Service Charge */}
           <div className="mt-2 flex justify-between text-sm">
             <span className="text-gray-500">
               Service Charge ({orderSettings.serviceChargePercentage}%)
@@ -684,6 +756,7 @@ const NewOrder = () => {
             </span>
           </div>
 
+          {/* Total */}
           <div className="mt-4 flex justify-between border-t pt-4">
             <span className="font-semibold text-gray-900">Total</span>
 
@@ -691,12 +764,25 @@ const NewOrder = () => {
               ₹{orderTotal.toFixed(2)}
             </span>
           </div>
+
           <button
             type="button"
             disabled={
               cart.length === 0 || (orderType === "Dine In" && !selectedTable)
             }
-            onClick={() => setShowPaymentModal(true)}
+            onClick={() => {
+              if (!isRestaurantOpen()) {
+                toast.error("Restaurant is not operative at this time.");
+                return;
+              }
+
+              if (user?.role === "Waiter") {
+                void placeOrder("Pending");
+                return;
+              }
+
+              setShowPaymentModal(true);
+            }}
             className="mt-5 w-full rounded-lg bg-gray-900 py-3 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-300"
           >
             Place Order

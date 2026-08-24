@@ -8,15 +8,42 @@ import mongoose from "mongoose";
 import { Settings } from "../settings/settings.model.js";
 import { Table } from "../tables/tables.model.js";
 
-export const createOrderService = async (
-  payload: CreateOrderPayload,
-) => {
+export const createOrderService = async (payload: CreateOrderPayload) => {
   const session = await mongoose.startSession();
 
   session.startTransaction();
 
   try {
     let customer = null;
+
+    const settings = await Settings.findOne();
+
+    if (!settings) {
+      throw new Error("Restaurant settings not found.");
+    }
+
+    const now = new Date();
+
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const [openingHour, openingMinute] = settings.openingTime
+      .split(":")
+      .map(Number);
+
+    const [closingHour, closingMinute] = settings.closingTime
+      .split(":")
+      .map(Number);
+
+    const openingMinutes = openingHour * 60 + openingMinute;
+
+    const closingMinutes = closingHour * 60 + closingMinute;
+
+    const isRestaurantOpen =
+      currentMinutes >= openingMinutes && currentMinutes <= closingMinutes;
+
+    if (!isRestaurantOpen) {
+      throw new Error("Restaurant is not operative at this time.");
+    }
 
     // Find or create customer
     if (payload.customerPhone) {
@@ -49,15 +76,11 @@ export const createOrderService = async (
       }).session(session);
 
       if (!table) {
-        throw new Error(
-          "Table not found or inactive.",
-        );
+        throw new Error("Table not found or inactive.");
       }
 
       if (table.status === "Occupied") {
-        throw new Error(
-          "Table is already occupied.",
-        );
+        throw new Error("Table is already occupied.");
       }
     }
 
@@ -73,12 +96,9 @@ export const createOrderService = async (
         lastOrder.orderNumber.replace("ORD-", ""),
       );
 
-      const newOrderNumber =
-        lastOrderNumber + 1;
+      const newOrderNumber = lastOrderNumber + 1;
 
-      orderNumber = `ORD-${newOrderNumber
-        .toString()
-        .padStart(6, "0")}`;
+      orderNumber = `ORD-${newOrderNumber.toString().padStart(6, "0")}`;
     }
 
     // Prepare order items
@@ -87,34 +107,23 @@ export const createOrderService = async (
     let subTotal = 0;
 
     for (const item of payload.items) {
-      const menuItem = (await Menu.findById(
-        item.menu,
-      )
+      const menuItem = (await Menu.findById(item.menu)
         .populate("inventory")
         .session(session)) as PopulatedMenuType | null;
 
       if (!menuItem) {
-        throw new Error(
-          `Menu item with ID ${item.menu} not found.`,
-        );
+        throw new Error(`Menu item with ID ${item.menu} not found.`);
       }
 
       if (!menuItem.isActive) {
-        throw new Error(
-          `Menu item ${menuItem.name} is not active.`,
-        );
+        throw new Error(`Menu item ${menuItem.name} is not active.`);
       }
 
       if (!menuItem.inventory) {
-        throw new Error(
-          "Inventory not found.",
-        );
+        throw new Error("Inventory not found.");
       }
 
-      if (
-        menuItem.inventory.quantity <
-        item.quantity
-      ) {
+      if (menuItem.inventory.quantity < item.quantity) {
         throw new Error(
           `Insufficient stock for menu item ${menuItem.name}. Available quantity: ${menuItem.inventory.quantity}`,
         );
@@ -133,8 +142,7 @@ export const createOrderService = async (
         },
       );
 
-      const total =
-        menuItem.sellingPrice * item.quantity;
+      const total = menuItem.sellingPrice * item.quantity;
 
       subTotal += total;
 
@@ -148,48 +156,29 @@ export const createOrderService = async (
     }
 
     // Discount
-    const discountPercentage =
-      payload.discountPercentage || 0;
+    const discountPercentage = payload.discountPercentage || 0;
 
-    const discountAmount =
-      (subTotal * discountPercentage) / 100;
-
-    const totalAfterDiscount =
-      subTotal - discountAmount;
-
-    // Restaurant settings
-    const settings =
-      await Settings.findOne();
-
-    if (!settings) {
-      throw new Error(
-        "Restaurant settings not found.",
-      );
+    if (discountPercentage < 0 || discountPercentage > 10) {
+      throw new Error("Discount must be between 0 and 10 percent.");
     }
 
-    // GST
-    const gstPercentage =
-      settings.gstPercentage;
+    const discountAmount = (subTotal * discountPercentage) / 100;
 
-    const gstAmount =
-      (totalAfterDiscount *
-        gstPercentage) /
-      100;
+    const totalAfterDiscount = subTotal - discountAmount;
+
+    // GST
+    const gstPercentage = settings.gstPercentage;
+
+    const gstAmount = (totalAfterDiscount * gstPercentage) / 100;
 
     // Service charge
-    const serviceChargePercentage =
-      settings.serviceChargePercentage;
+    const serviceChargePercentage = settings.serviceChargePercentage;
 
     const serviceChargeAmount =
-      (totalAfterDiscount *
-        serviceChargePercentage) /
-      100;
+      (totalAfterDiscount * serviceChargePercentage) / 100;
 
     // Grand total
-    const grandTotal =
-      totalAfterDiscount +
-      gstAmount +
-      serviceChargeAmount;
+    const grandTotal = totalAfterDiscount + gstAmount + serviceChargeAmount;
 
     // Create order
     const orders = await Order.create(
@@ -199,16 +188,13 @@ export const createOrderService = async (
 
           customer: customer?._id,
 
-          customerName:
-            customer?.name,
+          customerName: customer?.name,
 
           items: orderItems,
 
-          orderType:
-            payload.orderType,
+          orderType: payload.orderType,
 
-          table:
-            table?._id ?? null,
+          table: table?._id ?? null,
 
           subTotal,
 
@@ -227,8 +213,7 @@ export const createOrderService = async (
           grandTotal,
 
           // NEW
-          paymentStatus:
-            payload.paymentStatus,
+          paymentStatus: payload.paymentStatus,
         },
       ],
       { session },
@@ -249,21 +234,10 @@ export const createOrderService = async (
     await session.commitTransaction();
 
     // Return populated order
-    return await Order.findById(
-      order._id,
-    )
-      .populate(
-        "customer",
-        "name phone",
-      )
-      .populate(
-        "items.menu",
-        "name sellingPrice type",
-      )
-      .populate(
-        "table",
-        "tableNumber capacity status",
-      );
+    return await Order.findById(order._id)
+      .populate("customer", "name phone")
+      .populate("items.menu", "name sellingPrice type")
+      .populate("table", "tableNumber capacity status");
   } catch (error) {
     await session.abortTransaction();
 
@@ -293,10 +267,7 @@ export const getAllOrdersService = async (
       .limit(limit)
       .populate("customer", "name phone")
       .populate("items.menu", "name sellingPrice type")
-      .populate(
-        "table",
-        "tableNumber capacity status",
-      ),
+      .populate("table", "tableNumber capacity status"),
 
     Order.countDocuments(filter),
   ]);
@@ -311,7 +282,6 @@ export const getAllOrdersService = async (
     },
   };
 };
-
 
 export const getOrderByIdService = async (id: string) => {
   return await Order.findById(id)
@@ -328,60 +298,62 @@ export const updateOrderStatusService = async (
   session.startTransaction();
 
   try {
-  // Step 1: Find the order
-  const order = await Order.findById(id).session(session);
+    // Step 1: Find the order
+    const order = await Order.findById(id).session(session);
 
-  // Step 2: Check if order exists
-  if (!order) {
-    throw new Error("Order not found.");
-  }
+    // Step 2: Check if order exists
+    if (!order) {
+      throw new Error("Order not found.");
+    }
 
-  // Step 3: Define allowed status transitions
-  const allowedTransitions: Record<
-    "Pending" | "Preparing" | "Ready" | "Served" | "Cancelled",
-    ("Pending" | "Preparing" | "Ready" | "Served" | "Cancelled")[]
-  > = {
-    Pending: ["Preparing", "Cancelled"],
-    Preparing: ["Ready"],
-    Ready: ["Served"],
-    Served: [],
-    Cancelled: [],
-  };
+    // Step 3: Define allowed status transitions
+    const allowedTransitions: Record<
+      "Pending" | "Preparing" | "Ready" | "Served" | "Cancelled",
+      ("Pending" | "Preparing" | "Ready" | "Served" | "Cancelled")[]
+    > = {
+      Pending: ["Preparing", "Cancelled"],
+      Preparing: ["Ready"],
+      Ready: ["Served"],
+      Served: [],
+      Cancelled: [],
+    };
 
-  // Step 4: Get current order status
-  const currentStatus = order.status as keyof typeof allowedTransitions;
+    // Step 4: Get current order status
+    const currentStatus = order.status as keyof typeof allowedTransitions;
 
-  // Step 5: Get all valid next statuses
-  const validStatuses = allowedTransitions[currentStatus];
+    // Step 5: Get all valid next statuses
+    const validStatuses = allowedTransitions[currentStatus];
 
-  // Step 6: Validate transition
-  if (!validStatuses.includes(status)) {
-    throw new Error(`Cannot change status from ${currentStatus} to ${status}`);
-  }
+    // Step 6: Validate transition
+    if (!validStatuses.includes(status)) {
+      throw new Error(
+        `Cannot change status from ${currentStatus} to ${status}`,
+      );
+    }
 
-  // Step 7: Update status
-  order.status = status;
+    // Step 7: Update status
+    order.status = status;
 
-  // Step 8: Save changes
-  await order.save({ session });
+    // Step 8: Save changes
+    await order.save({ session });
 
-  // A table is released when its dine-in order has been served, regardless of
-  // whether the bill is paid now or settled afterwards.
-  if (status === "Served" && order.table) {
-    await Table.findByIdAndUpdate(
-      order.table,
-      { status: "Available" },
-      { session, runValidators: true },
-    );
-  }
+    // A table is released when its dine-in order has been served, regardless of
+    // whether the bill is paid now or settled afterwards.
+    if (status === "Served" && order.table) {
+      await Table.findByIdAndUpdate(
+        order.table,
+        { status: "Available" },
+        { session, runValidators: true },
+      );
+    }
 
-  await session.commitTransaction();
+    await session.commitTransaction();
 
-  // Step 9: Return updated order with details used by the Orders screen.
-  return await Order.findById(order._id)
-    .populate("customer", "name phone")
-    .populate("items.menu", "name sellingPrice type")
-    .populate("table", "tableNumber capacity status");
+    // Step 9: Return updated order with details used by the Orders screen.
+    return await Order.findById(order._id)
+      .populate("customer", "name phone")
+      .populate("items.menu", "name sellingPrice type")
+      .populate("table", "tableNumber capacity status");
   } catch (error) {
     await session.abortTransaction();
     throw error;
@@ -390,9 +362,43 @@ export const updateOrderStatusService = async (
   }
 };
 
+export const applyPaymentDiscount = (
+  order: {
+    subTotal: number;
+    gstPercentage: number;
+    serviceChargePercentage: number;
+    discountPercentage: number;
+    discountAmount: number;
+    gstAmount: number;
+    serviceChargeAmount: number;
+    grandTotal: number;
+  },
+  discountPercentage: number,
+) => {
+  if (
+    !Number.isFinite(discountPercentage) ||
+    discountPercentage < 0 ||
+    discountPercentage > 10
+  ) {
+    throw new Error("Discount must be between 0 and 10 percent.");
+  }
+
+  const discountAmount = (order.subTotal * discountPercentage) / 100;
+  const totalAfterDiscount = order.subTotal - discountAmount;
+
+  order.discountPercentage = discountPercentage;
+  order.discountAmount = discountAmount;
+  order.gstAmount = (totalAfterDiscount * order.gstPercentage) / 100;
+  order.serviceChargeAmount =
+    (totalAfterDiscount * order.serviceChargePercentage) / 100;
+  order.grandTotal =
+    totalAfterDiscount + order.gstAmount + order.serviceChargeAmount;
+};
+
 export const updatePaymentStatusService = async (
   id: string,
   paymentStatus: "Pending" | "Paid",
+  discountPercentage?: number,
 ) => {
   const session = await mongoose.startSession();
 
@@ -405,17 +411,17 @@ export const updatePaymentStatusService = async (
       throw new Error("Order not found.");
     }
 
+    if (discountPercentage !== undefined) {
+      applyPaymentDiscount(order, discountPercentage);
+    }
+
     // Update payment status
     order.paymentStatus = paymentStatus;
 
     await order.save({ session });
 
     // Payment alone does not free a dine-in table; it is released on Served.
-    if (
-      paymentStatus === "Paid" &&
-      order.status === "Served" &&
-      order.table
-    ) {
+    if (paymentStatus === "Paid" && order.status === "Served" && order.table) {
       await Table.findByIdAndUpdate(
         order.table,
         {

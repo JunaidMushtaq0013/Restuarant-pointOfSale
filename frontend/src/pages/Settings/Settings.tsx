@@ -45,7 +45,9 @@ const Settings = () => {
     value: SettingsData[K],
   ) => {
     setSettings((currentSettings) =>
-      currentSettings ? { ...currentSettings, [field]: value } : currentSettings,
+      currentSettings
+        ? { ...currentSettings, [field]: value }
+        : currentSettings,
     );
   };
 
@@ -91,7 +93,11 @@ const Settings = () => {
 
     reader.onload = () => {
       const result = typeof reader.result === "string" ? reader.result : "";
-      setSettings({ ...settings, logoUrl: result, initials: settings.initials || "" });
+      setSettings({
+        ...settings,
+        logoUrl: result,
+        initials: settings.initials || "",
+      });
     };
 
     reader.readAsDataURL(file);
@@ -110,13 +116,11 @@ const Settings = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="mt-1 text-sm text-gray-500">Restaurant and billing details</p>
+          <p className="mt-1 text-sm text-gray-500">
+            Restaurant and billing details
+          </p>
         </div>
-        <button
-          type="submit"
-          disabled={saving}
-          className="btn-primary"
-        >
+        <button type="submit" disabled={saving} className="btn-primary">
           {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
@@ -125,8 +129,12 @@ const Settings = () => {
         <div className="mb-6 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-900">Restaurant Brand</p>
-              <p className="text-xs text-gray-500">Upload a logo, or leave it blank to use initials.</p>
+              <p className="text-sm font-semibold text-gray-900">
+                Restaurant Brand
+              </p>
+              <p className="text-xs text-gray-500">
+                Upload a logo, or leave it blank to use initials.
+              </p>
             </div>
 
             <label className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -144,7 +152,9 @@ const Settings = () => {
             <Field
               label="Initials"
               value={settings.initials || ""}
-              onChange={(value) => updateField("initials", value.slice(0, 3).toUpperCase())}
+              onChange={(value) =>
+                updateField("initials", value.slice(0, 3).toUpperCase())
+              }
               placeholder="WP"
             />
             <div className="flex items-end">
@@ -164,18 +174,71 @@ const Settings = () => {
         </div>
 
         <div className="grid gap-5 md:grid-cols-2">
-          <Field label="Restaurant Name" value={settings.restaurantName} onChange={(value) => updateField("restaurantName", value)} />
-          <Field label="Phone" value={settings.phone} onChange={(value) => updateField("phone", value)} />
-          <Field label="Email" type="email" value={settings.email} onChange={(value) => updateField("email", value)} />
-          <Field label="Currency" value={settings.currency} onChange={(value) => updateField("currency", value)} />
-          <Field label="GST Number" value={settings.gstNumber} onChange={(value) => updateField("gstNumber", value)} />
-          <Field label="GST Percentage" type="number" min="0" value={settings.gstPercentage} onChange={(value) => updateField("gstPercentage", Number(value))} />
-          <Field label="Service Charge Percentage" type="number" min="0" value={settings.serviceChargePercentage} onChange={(value) => updateField("serviceChargePercentage", Number(value))} />
-          <Field label="Opening Time" type="time" value={settings.openingTime} onChange={(value) => updateField("openingTime", value)} />
-          <Field label="Closing Time" type="time" value={settings.closingTime} onChange={(value) => updateField("closingTime", value)} />
+          <Field
+            label="Restaurant Name"
+            value={settings.restaurantName}
+            onChange={(value) => updateField("restaurantName", value)}
+          />
+          <Field
+            label="Phone"
+            value={settings.phone}
+            onChange={(value) => updateField("phone", value)}
+          />
+          <Field
+            label="Email"
+            type="email"
+            value={settings.email}
+            onChange={(value) => updateField("email", value)}
+          />
+          <Field
+            label="Currency"
+            value={settings.currency}
+            onChange={(value) => updateField("currency", value)}
+          />
+          <Field
+            label="GST Number"
+            value={settings.gstNumber}
+            onChange={(value) => updateField("gstNumber", value)}
+          />
+          <Field
+            label="GST Percentage"
+            type="number"
+            min="0"
+            value={settings.gstPercentage}
+            onChange={(value) => updateField("gstPercentage", Number(value))}
+          />
+          <Field
+            label="Service Charge Percentage"
+            type="number"
+            min="0"
+            value={settings.serviceChargePercentage}
+            onChange={(value) =>
+              updateField("serviceChargePercentage", Number(value))
+            }
+          />
+          <Field
+            label="Opening Time"
+            type="time"
+            value={settings.openingTime}
+            onChange={(value) => updateField("openingTime", value)}
+          />
+          <Field
+            label="Closing Time"
+            type="time"
+            value={settings.closingTime}
+            onChange={(value) => updateField("closingTime", value)}
+          />
 
-          <TextArea label="Restaurant Address" value={settings.restaurantAddress} onChange={(value) => updateField("restaurantAddress", value)} />
-          <TextArea label="Invoice Footer" value={settings.invoiceFooter} onChange={(value) => updateField("invoiceFooter", value)} />
+          <TextArea
+            label="Restaurant Address"
+            value={settings.restaurantAddress}
+            onChange={(value) => updateField("restaurantAddress", value)}
+          />
+          <TextArea
+            label="Invoice Footer"
+            value={settings.invoiceFooter}
+            onChange={(value) => updateField("invoiceFooter", value)}
+          />
         </div>
       </section>
     </form>
@@ -191,7 +254,14 @@ interface FieldProps {
   onChange: (value: string) => void;
 }
 
-const Field = ({ label, type = "text", min, value, placeholder, onChange }: FieldProps) => (
+const Field = ({
+  label,
+  type = "text",
+  min,
+  value,
+  placeholder,
+  onChange,
+}: FieldProps) => (
   <label className="block text-sm font-medium text-gray-700">
     {label}
     <input

@@ -4,6 +4,7 @@ import AddTableModal from "../../components/tables/AddTableModal";
 import EditTableModal from "../../components/tables/EditTableModal";
 import { useAuth } from "../../context/AuthContext";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import ActionIcon from "../../components/common/ActionIcon";
 import { toast } from "react-toastify";
 
 interface Table {
@@ -192,10 +193,7 @@ const Tables = () => {
             </button>
           )}
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="btn-primary"
-          >
+          <button onClick={() => setIsModalOpen(true)} className="btn-primary">
             + Add Table
           </button>
         </div>
@@ -251,8 +249,9 @@ const Tables = () => {
               <button
                 onClick={() => setSelectedTable(table)}
                 className="mt-4 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+                aria-label={`Edit table ${table.tableNumber}`}
               >
-                Edit
+                <ActionIcon label="Edit" />
               </button>
 
               {(user?.role === "Manager" || user?.role === "Cashier") &&
@@ -261,8 +260,9 @@ const Tables = () => {
                     onClick={() => setTableToRelease(table)}
                     disabled={submitting}
                     className="mt-2 w-full rounded-lg border border-green-200 px-3 py-2 text-sm font-medium text-green-700 transition hover:bg-green-50 disabled:opacity-50"
+                    aria-label={`Release table ${table.tableNumber}`}
                   >
-                    Release Table
+                    <ActionIcon label="Release" />
                   </button>
                 )}
 
@@ -271,8 +271,9 @@ const Tables = () => {
                   onClick={() => setTableToDeactivate(table)}
                   disabled={submitting}
                   className="mt-2 w-full rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                  aria-label={`Deactivate table ${table.tableNumber}`}
                 >
-                  Deactivate
+                  <ActionIcon label="Deactivate" />
                 </button>
               )}
             </div>
@@ -325,8 +326,9 @@ const Tables = () => {
                 <button
                   onClick={() => activateTable(table._id)}
                   className="mt-4 w-full rounded-lg bg-gray-900 px-3 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                  aria-label={`Activate table ${table.tableNumber}`}
                 >
-                  Activate
+                  <ActionIcon label="Activate" />
                 </button>
               </div>
             ))}

@@ -60,7 +60,9 @@ const Kitchen = () => {
 
       setOrders((currentOrders) =>
         nextStatus === "Ready"
-          ? currentOrders.filter((currentOrder) => currentOrder._id !== order._id)
+          ? currentOrders.filter(
+              (currentOrder) => currentOrder._id !== order._id,
+            )
           : currentOrders.map((currentOrder) =>
               currentOrder._id === order._id ? updatedOrder : currentOrder,
             ),
@@ -82,7 +84,9 @@ const Kitchen = () => {
     <div>
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Kitchen</h1>
-        <p className="mt-1 text-sm text-gray-500">Pending and preparing orders</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Pending and preparing orders
+        </p>
       </div>
 
       {orders.length === 0 ? (
@@ -96,12 +100,18 @@ const Kitchen = () => {
             const actionLabel = isPending ? "Start Preparing" : "Mark Ready";
 
             return (
-              <article key={order._id} className="border border-gray-200 bg-white p-5 shadow-sm">
+              <article
+                key={order._id}
+                className="border border-gray-200 bg-white p-5 shadow-sm"
+              >
                 <div className="flex items-start justify-between gap-4 border-b border-gray-100 pb-4">
                   <div>
-                    <p className="font-semibold text-gray-900">{order.orderNumber}</p>
+                    <p className="font-semibold text-gray-900">
+                      {order.orderNumber}
+                    </p>
                     <p className="mt-1 text-sm text-gray-500">
-                      {order.customerName || "Walk-in customer"} · {order.orderType}
+                      {order.customerName || "Walk-in customer"} ·{" "}
+                      {order.orderType}
                     </p>
                   </div>
                   <span
@@ -117,7 +127,10 @@ const Kitchen = () => {
 
                 <ul className="my-4 space-y-2 text-sm text-gray-700">
                   {order.items.map((item, index) => (
-                    <li key={`${item._id ?? item.name}-${index}`} className="flex justify-between gap-4">
+                    <li
+                      key={`${item._id ?? item.name}-${index}`}
+                      className="flex justify-between gap-4"
+                    >
                       <span>{item.name}</span>
                       <span className="font-medium">x{item.quantity}</span>
                     </li>

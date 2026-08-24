@@ -35,12 +35,10 @@ const EditInventoryModal = ({
   submitting,
 }: EditInventoryModalProps) => {
   const [name, setName] = useState("");
-  const [itemType, setItemType] = useState<
-    "Raw Material" | "Ready Item"
-  >("Raw Material");
-  const [unit, setUnit] = useState<
-    "kg" | "g" | "l" | "ml" | "pcs"
-  >("kg");
+  const [itemType, setItemType] = useState<"Raw Material" | "Ready Item">(
+    "Raw Material",
+  );
+  const [unit, setUnit] = useState<"kg" | "g" | "l" | "ml" | "pcs">("kg");
   const [quantity, setQuantity] = useState("");
   const [minimumStock, setMinimumStock] = useState("");
   const [buyingPrice, setBuyingPrice] = useState("");
@@ -63,12 +61,7 @@ const EditInventoryModal = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !name ||
-      !quantity ||
-      !minimumStock ||
-      !buyingPrice
-    ) {
+    if (!name || !quantity || !minimumStock || !buyingPrice) {
       return;
     }
 
@@ -96,10 +89,7 @@ const EditInventoryModal = ({
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-        >
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Name */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -124,21 +114,13 @@ const EditInventoryModal = ({
             <select
               value={itemType}
               onChange={(e) =>
-                setItemType(
-                  e.target.value as
-                    | "Raw Material"
-                    | "Ready Item",
-                )
+                setItemType(e.target.value as "Raw Material" | "Ready Item")
               }
               className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
             >
-              <option value="Raw Material">
-                Raw Material
-              </option>
+              <option value="Raw Material">Raw Material</option>
 
-              <option value="Ready Item">
-                Ready Item
-              </option>
+              <option value="Ready Item">Ready Item</option>
             </select>
           </div>
 
@@ -151,14 +133,7 @@ const EditInventoryModal = ({
             <select
               value={unit}
               onChange={(e) =>
-                setUnit(
-                  e.target.value as
-                    | "kg"
-                    | "g"
-                    | "l"
-                    | "ml"
-                    | "pcs",
-                )
+                setUnit(e.target.value as "kg" | "g" | "l" | "ml" | "pcs")
               }
               className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
             >
@@ -182,9 +157,7 @@ const EditInventoryModal = ({
                 min="0"
                 step="0.01"
                 value={quantity}
-                onChange={(e) =>
-                  setQuantity(e.target.value)
-                }
+                onChange={(e) => setQuantity(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
                 required
               />
@@ -200,9 +173,7 @@ const EditInventoryModal = ({
                 min="0"
                 step="0.01"
                 value={minimumStock}
-                onChange={(e) =>
-                  setMinimumStock(e.target.value)
-                }
+                onChange={(e) => setMinimumStock(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
                 required
               />
@@ -220,9 +191,7 @@ const EditInventoryModal = ({
               min="0"
               step="0.01"
               value={buyingPrice}
-              onChange={(e) =>
-                setBuyingPrice(e.target.value)
-              }
+              onChange={(e) => setBuyingPrice(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
               required
             />
@@ -239,11 +208,7 @@ const EditInventoryModal = ({
               Cancel
             </button>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className="btn-primary"
-            >
+            <button type="submit" disabled={submitting} className="btn-primary">
               {submitting ? "Updating..." : "Update Inventory"}
             </button>
           </div>

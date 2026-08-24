@@ -38,13 +38,9 @@ const PaymentMethodModal = ({
           >
             <div className="mb-2 text-3xl">💵</div>
 
-            <p className="font-semibold text-gray-900">
-              Cash
-            </p>
+            <p className="font-semibold text-gray-900">Cash</p>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Pay with cash
-            </p>
+            <p className="mt-1 text-sm text-gray-500">Pay with cash</p>
           </button>
 
           <button
@@ -54,13 +50,9 @@ const PaymentMethodModal = ({
           >
             <div className="mb-2 text-3xl">💳</div>
 
-            <p className="font-semibold text-gray-900">
-              Online
-            </p>
+            <p className="font-semibold text-gray-900">Online</p>
 
-            <p className="mt-1 text-sm text-gray-500">
-              Pay online
-            </p>
+            <p className="mt-1 text-sm text-gray-500">Pay online</p>
           </button>
         </div>
       </div>

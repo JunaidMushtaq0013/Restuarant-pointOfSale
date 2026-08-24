@@ -4,6 +4,7 @@ import api from "../../api/axious";
 import { useAuth } from "../../context/AuthContext";
 import ViewOrderModal from "../../components/order/veiwOrderModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import ActionIcon from "../../components/common/ActionIcon";
 
 export interface Order {
   _id: string;
@@ -332,12 +333,13 @@ const Orders = () => {
   // Mark As Paid
   // =========================
 
-  const markAsPaid = async (id: string) => {
+  const markAsPaid = async (id: string, discountPercentage: number) => {
     try {
       setPaymentLoading(id);
 
       const response = await api.patch(`/orders/${id}/payment-status`, {
         paymentStatus: "Paid",
+        discountPercentage,
       });
 
       const updatedOrder = response.data.data as Order;
@@ -360,10 +362,14 @@ const Orders = () => {
 
   ///razorpay \
 
-  const handleOnlinePayment = async (orderId: string) => {
+  const handleOnlinePayment = async (
+    orderId: string,
+    discountPercentage: number,
+  ) => {
     try {
       const response = await api.post("/payments/razorpay/create-order", {
         orderId,
+        discountPercentage,
       });
 
       const { razorpayOrder } = response.data.data;
@@ -696,7 +702,7 @@ const Orders = () => {
                         onClick={() => viewOrder(order._id)}
                         className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                       >
-                        View
+                        <ActionIcon label="View" />
                       </button>
                     </td>
                   </tr>
@@ -818,7 +824,7 @@ const Orders = () => {
                 onClick={() => viewOrder(order._id)}
                 className="mt-4 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                View Order
+                <ActionIcon label="View" />
               </button>
             </div>
           ))
@@ -858,6 +864,7 @@ const Orders = () => {
                 onClick={() => goToPage(pagination.currentPage - 1)}
                 disabled={pagination.currentPage === 1}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Previous page"
               >
                 Previous
               </button>
@@ -871,6 +878,7 @@ const Orders = () => {
                 onClick={() => goToPage(pagination.currentPage + 1)}
                 disabled={pagination.currentPage === pagination.totalPages}
                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Next page"
               >
                 Next
               </button>
@@ -895,6 +903,9 @@ const Orders = () => {
           onMarkAsServed={markAsServed}
           onCancelOrder={(order) => setOrderToCancel(order)}
           canCancelOrder={user?.role === "Manager" || user?.role === "Cashier"}
+          canProcessPayment={
+            user?.role === "Manager" || user?.role === "Cashier"
+          }
           canMarkAsServed={
             user?.role === "Manager" ||
             user?.role === "Cashier" ||

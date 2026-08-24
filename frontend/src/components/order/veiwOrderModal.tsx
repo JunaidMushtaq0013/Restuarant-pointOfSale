@@ -1,13 +1,15 @@
+import { useEffect, useState } from "react";
 import type { InvoiceSettings, Order } from "../../pages/Orders/Orders";
 
 interface ViewOrderModalProps {
   order: Order;
   onClose: () => void;
-  onMarkAsPaid: (id: string) => void;
-  onOnlinePayment: (id: string) => void;
+  onMarkAsPaid: (id: string, discountPercentage: number) => void;
+  onOnlinePayment: (id: string, discountPercentage: number) => void;
   onMarkAsServed: (id: string) => void;
   onCancelOrder: (order: Order) => void;
   canCancelOrder: boolean;
+  canProcessPayment: boolean;
   canMarkAsServed: boolean;
   paymentLoading: boolean;
   servingLoading: boolean;
@@ -22,11 +24,32 @@ const ViewOrderModal = ({
   onMarkAsServed,
   onCancelOrder,
   canCancelOrder,
+  canProcessPayment,
   canMarkAsServed,
   paymentLoading,
   servingLoading,
   invoiceSettings,
 }: ViewOrderModalProps) => {
+  const [discountPercentage, setDiscountPercentage] = useState(
+    order.discountPercentage || 0,
+  );
+
+  useEffect(() => {
+    setDiscountPercentage(order.discountPercentage || 0);
+  }, [order._id, order.discountPercentage]);
+
+  const updateDiscount = (value: number) => {
+    setDiscountPercentage(Math.min(10, Math.max(0, value)));
+  };
+
+  const collectionDiscountAmount = (order.subTotal * discountPercentage) / 100;
+  const collectionSubtotal = order.subTotal - collectionDiscountAmount;
+  const collectionGst = (collectionSubtotal * order.gstPercentage) / 100;
+  const collectionServiceCharge =
+    (collectionSubtotal * order.serviceChargePercentage) / 100;
+  const collectionTotal =
+    collectionSubtotal + collectionGst + collectionServiceCharge;
+
   const printInvoice = () => {
     const escapeHtml = (value: string | number) =>
       String(value)
@@ -228,6 +251,33 @@ const ViewOrderModal = ({
               </div>
             )}
 
+            {canProcessPayment && order.paymentStatus === "Pending" && (
+              <>
+                <label className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-gray-500">New Discount (%)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    step="0.01"
+                    value={discountPercentage}
+                    onChange={(event) =>
+                      updateDiscount(Number(event.target.value))
+                    }
+                    className="w-24 rounded border border-gray-300 px-2 py-1 text-right text-sm outline-none focus:border-gray-900"
+                  />
+                </label>
+                {discountPercentage > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">New Discount</span>
+                    <span className="font-medium text-red-600">
+                      -₹{collectionDiscountAmount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">
                 GST ({order.gstPercentage}%)
@@ -251,7 +301,11 @@ const ViewOrderModal = ({
                 <span className="font-semibold text-gray-900">Grand Total</span>
 
                 <span className="text-lg font-bold text-gray-900">
-                  ₹{order.grandTotal.toFixed(2)}
+                  ₹
+                  {(canProcessPayment && order.paymentStatus === "Pending"
+                    ? collectionTotal
+                    : order.grandTotal
+                  ).toFixed(2)}
                 </span>
               </div>
             </div>
@@ -298,13 +352,13 @@ const ViewOrderModal = ({
               Print Invoice
             </button>
 
-            {order.paymentStatus === "Pending" && (
+            {canProcessPayment && order.paymentStatus === "Pending" && (
               <div className="flex w-full gap-2 md:w-auto">
                 {/* Cash Payment */}
                 <button
                   type="button"
                   disabled={paymentLoading}
-                  onClick={() => onMarkAsPaid(order._id)}
+                  onClick={() => onMarkAsPaid(order._id, discountPercentage)}
                   className="flex-1 rounded-lg bg-green-600 px-3 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-4 md:text-sm"
                 >
                   {paymentLoading ? "Processing..." : "Cash"}
@@ -314,7 +368,7 @@ const ViewOrderModal = ({
                 <button
                   type="button"
                   disabled={paymentLoading}
-                  onClick={() => onOnlinePayment(order._id)}
+                  onClick={() => onOnlinePayment(order._id, discountPercentage)}
                   className="flex-1 rounded-lg bg-blue-600 px-3 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-4 md:text-sm"
                 >
                   Online
