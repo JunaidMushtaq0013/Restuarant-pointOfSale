@@ -21,10 +21,20 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
     if (!settings) {
       throw new Error("Restaurant settings not found.");
     }
+const now = new Date();
 
-    const now = new Date();
+const indiaTime = new Intl.DateTimeFormat("en-IN", {
+  timeZone: "Asia/Kolkata",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+}).format(now);
 
-    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+const [currentHour, currentMinute] =
+  indiaTime.split(":").map(Number);
+
+const currentMinutes =
+  currentHour * 60 + currentMinute;
 
     const [openingHour, openingMinute] = settings.openingTime
       .split(":")
