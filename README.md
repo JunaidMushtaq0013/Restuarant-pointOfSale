@@ -78,7 +78,7 @@ Create `backend/.env`:
 
 ```env
 PORT=5000
-MONGODB_URI=mongodb://127.0.0.1:27017/warisoft-pos
+MONGODB_URI=your mongodb url;
 JWT_SECRET=replace-with-a-long-random-secret
 JWT_EXPIRES_IN=1d
 FRONTEND_URL=http://localhost:5173
