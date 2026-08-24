@@ -4,13 +4,19 @@ const globalErrorHandler = (
   error: unknown,
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   console.error(error);
 
-  res.status(500).json({
+  const message = error instanceof Error ? error.message : "Internal Server Error";
+  const statusCode =
+    error instanceof Error && /not found|must be|already|inactive|operative|occupied|insufficient|required/i.test(message)
+      ? 400
+      : 500;
+
+  res.status(statusCode).json({
     success: false,
-    message: "Internal Server Error",
+    message,
   });
 };
 

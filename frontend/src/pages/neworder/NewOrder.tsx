@@ -374,7 +374,9 @@ const NewOrder = () => {
     } catch (error) {
       console.error("Failed to create order:", error);
       toast.error(
-        "Failed to create order. Please check the table and stock, then try again.",
+        (error as { response?: { data?: { message?: string } } }).response?.data
+          ?.message ||
+          "Failed to create order. Please check the table and stock, then try again.",
       );
     } finally {
       setPlacingOrder(false);
