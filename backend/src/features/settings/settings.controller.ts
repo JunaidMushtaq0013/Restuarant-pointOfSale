@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import {
   getSettingsService,
+  getPublicSettingsService,
   updateSettingsService,
 } from "./settings.service.js";
 
@@ -17,6 +18,20 @@ export const getSettingsController = async (
   });
 };
 
+
+export const getPublicSettingsController = async (
+  req: Request,
+  res: Response,
+) => {
+  const settings = await getPublicSettingsService();
+
+  res.status(200).json({
+    status: "success",
+    message: "Public settings retrieved successfully.",
+    data: settings,
+  });
+};
+
 export const updateSettingsController = async (
   req: Request,
   res: Response
@@ -29,3 +44,4 @@ export const updateSettingsController = async (
     data: settings,
   });
 };
+

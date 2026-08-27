@@ -25,6 +25,12 @@ export const createMenuService = async (payload: MenuType) => {
   return menu;
 };
 
+export const getPublicMenuService = async () => {
+  return await Menu.find({ isActive: true })
+    .sort({ createdAt: -1 })
+    .populate("category");
+};
+
 export const getAllMenuActiveService = async (
   page = 1,
   limit = 10,

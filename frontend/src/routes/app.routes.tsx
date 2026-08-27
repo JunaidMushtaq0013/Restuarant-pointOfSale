@@ -14,6 +14,7 @@ import Kitchen from "../pages/Kitchen/Kitchen";
 import Settings from "../pages/Settings/Settings";
 import Orders from "../pages/Orders/Orders";
 import NewOrder from "../pages/neworder/NewOrder";
+import DigitalMenu from "../pages/DigitalMenu/DigitalMenu";
 
 const AppRoutes = () => {
   return (
@@ -22,6 +23,7 @@ const AppRoutes = () => {
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="/login" element={<Login />} />
+        <Route path="/digital-menu" element={<DigitalMenu />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>

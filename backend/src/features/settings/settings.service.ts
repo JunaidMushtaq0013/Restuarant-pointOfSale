@@ -25,9 +25,25 @@ export const getSettingsService = async () => {
   return settings;
 };
 
+
+
+export const getPublicSettingsService = async () => {
+  const settings = await Settings.findOne().select(
+    "restaurantName logoUrl initials restaurantAddress phone currency",
+  );
+
+  if (!settings) {
+    throw new Error("Restaurant settings not found.");
+  }
+
+  return settings;
+};
+
 export const updateSettingsService = async (payload: SettingsType) => {
   return await Settings.findOneAndUpdate({}, payload, {
     new: true,
     runValidators: true,
   });
 };
+
+

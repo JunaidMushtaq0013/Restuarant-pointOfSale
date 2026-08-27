@@ -1,5 +1,5 @@
 import {Response,Request,NextFunction} from 'express';
-import { createMenuService, getAllMenuActiveService, getAllMenuService, getMenuByIdService, toggleMenuActiveService, updateMenuService,deleteMenuService} from './menu.service.js';
+import { createMenuService,getPublicMenuService, getAllMenuActiveService, getAllMenuService, getMenuByIdService, toggleMenuActiveService, updateMenuService,deleteMenuService} from './menu.service.js';
 import { uploadToCloudinary } from "../../utils/uploadToCloudinary.js";
 
 
@@ -26,6 +26,24 @@ export const createMenuController = async (
     res.status(201).json({
       status: "success",
       message: "Menu created successfully",
+      data: menu,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPublicMenuController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const menu = await getPublicMenuService();
+
+    res.status(200).json({
+      status: "success",
+      message: "Public menu retrieved successfully",
       data: menu,
     });
   } catch (error) {

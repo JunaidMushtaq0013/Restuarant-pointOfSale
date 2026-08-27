@@ -8,6 +8,7 @@ import {
   updateMenuController,
   toggleMenuActiveController,
   deleteMenuController,
+  getPublicMenuController,
 } from "./menu.controller.js";
 
 import { authenticate } from "../../middleware/authenticate.js";
@@ -22,6 +23,11 @@ router.post(
   authorize("Manager"),
   upload.single("image"),
   createMenuController,
+);
+
+router.get(
+  "/public",
+  getPublicMenuController,
 );
 
 router.get(
