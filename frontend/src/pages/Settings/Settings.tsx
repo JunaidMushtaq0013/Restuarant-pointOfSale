@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { toast } from "react-toastify";
 import api from "../../api/axious";
 
+import { QRCodeCanvas } from "qrcode.react";
 interface SettingsData {
   restaurantName: string;
   logoUrl?: string;
@@ -23,6 +24,7 @@ const Settings = () => {
   const [settings, setSettings] = useState<SettingsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const digitalMenuUrl = `${window.location.origin}/digital-menu`;
 
   useEffect(() => {
     const getSettings = async () => {
@@ -241,6 +243,156 @@ const Settings = () => {
           />
         </div>
       </section>
+
+     <section className="mt-6 border border-gray-200 bg-white p-6 shadow-sm">
+  <div>
+    <h2 className="text-lg font-semibold text-gray-900">
+      Digital Menu QR Code
+    </h2>
+
+    <p className="mt-1 text-sm text-gray-500">
+      Customers can scan this QR code to open your digital menu.
+    </p>
+  </div>
+
+  <div className="mt-6 flex flex-col items-center gap-6 rounded-xl border border-gray-200 bg-gray-50 p-6 sm:flex-row sm:items-center">
+    {/* QR Code */}
+    <div
+      id="digital-menu-qr"
+      className="rounded-xl bg-white p-4 shadow-sm"
+    >
+      <QRCodeCanvas
+        value={digitalMenuUrl}
+        size={220}
+        bgColor="#ffffff"
+        fgColor="#211e1b"
+        level="H"
+        includeMargin
+      />
+    </div>
+
+    {/* Information */}
+    <div className="text-center sm:text-left">
+      <h3 className="text-base font-semibold text-gray-900">
+        {settings.restaurantName}
+      </h3>
+
+      <p className="mt-2 text-sm text-gray-500">
+        Scan to view our digital menu.
+      </p>
+
+      <p className="mt-3 break-all text-xs text-gray-400">
+        {digitalMenuUrl}
+      </p>
+
+      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={() => {
+            const canvas = document.querySelector(
+              "#digital-menu-qr canvas",
+            ) as HTMLCanvasElement | null;
+
+            if (!canvas) {
+              toast.error("Unable to generate QR code.");
+              return;
+            }
+
+            const link = document.createElement("a");
+            link.download = `${settings.restaurantName}-digital-menu-qr.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+
+            toast.success("QR code downloaded.");
+          }}
+          className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+        >
+          Download QR
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            const canvas = document.querySelector(
+              "#digital-menu-qr canvas",
+            ) as HTMLCanvasElement | null;
+
+            if (!canvas) {
+              toast.error("Unable to print QR code.");
+              return;
+            }
+
+            const qrImage = canvas.toDataURL("image/png");
+
+            const printWindow = window.open("", "_blank");
+
+            if (!printWindow) {
+              toast.error("Please allow pop-ups to print the QR code.");
+              return;
+            }
+
+            printWindow.document.write(`
+              <html>
+                <head>
+                  <title>${settings.restaurantName} - Digital Menu QR</title>
+                  <style>
+                    body {
+                      margin: 0;
+                      min-height: 100vh;
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      font-family: Arial, sans-serif;
+                      text-align: center;
+                    }
+
+                    .container {
+                      padding: 40px;
+                    }
+
+                    img {
+                      width: 280px;
+                      height: 280px;
+                      margin: 20px 0;
+                    }
+
+                    h1 {
+                      font-size: 28px;
+                      margin-bottom: 8px;
+                    }
+
+                    p {
+                      color: #666;
+                      font-size: 16px;
+                    }
+                  </style>
+                </head>
+
+                <body>
+                  <div class="container">
+                    <h1>${settings.restaurantName}</h1>
+                    <p>Scan to view our digital menu</p>
+                    <img src="${qrImage}" />
+                    <p>${settings.restaurantAddress}</p>
+                  </div>
+                </body>
+              </html>
+            `);
+
+            printWindow.document.close();
+
+            printWindow.onload = () => {
+              printWindow.print();
+            };
+          }}
+          className="rounded-lg bg-[#211e1b] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#342f2a]"
+        >
+          Print QR
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
     </form>
   );
 };
