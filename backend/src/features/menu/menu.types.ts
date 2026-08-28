@@ -5,6 +5,8 @@ export interface MenuType {
 
   name: string;
 
+  description?: string;
+
   inventory: Types.ObjectId;
 
   category: Types.ObjectId;

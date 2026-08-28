@@ -9,6 +9,11 @@ const menuSchema = new Schema<MenuType>(
       unique: true,
       trim: true,
     },
+    description: {
+      type: String,
+      trim: true,
+      
+    },
 
     inventory: {
       type: Schema.Types.ObjectId,

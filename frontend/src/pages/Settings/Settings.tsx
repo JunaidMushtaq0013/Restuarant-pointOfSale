@@ -25,6 +25,7 @@ const Settings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const digitalMenuUrl = `${window.location.origin}/digital-menu`;
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   useEffect(() => {
     const getSettings = async () => {
@@ -62,8 +63,34 @@ const Settings = () => {
 
     try {
       setSaving(true);
-      const response = await api.patch("/settings", settings);
+
+      const formData = new FormData();
+
+      formData.append("restaurantName", settings.restaurantName);
+      formData.append("initials", settings.initials || "");
+      formData.append("restaurantAddress", settings.restaurantAddress);
+      formData.append("phone", settings.phone);
+      formData.append("email", settings.email);
+      formData.append("currency", settings.currency);
+      formData.append("gstNumber", settings.gstNumber);
+      formData.append("gstPercentage", String(settings.gstPercentage));
+      formData.append(
+        "serviceChargePercentage",
+        String(settings.serviceChargePercentage),
+      );
+      formData.append("openingTime", settings.openingTime);
+      formData.append("closingTime", settings.closingTime);
+      formData.append("invoiceFooter", settings.invoiceFooter);
+
+      if (logoFile) {
+        formData.append("logo", logoFile);
+      }
+
+      const response = await api.patch("/settings", formData);
+
       setSettings(response.data.data);
+      setLogoFile(null);
+
       window.dispatchEvent(
         new CustomEvent("settings-updated", {
           detail: {
@@ -73,6 +100,7 @@ const Settings = () => {
           },
         }),
       );
+
       toast.success("Settings updated successfully.");
     } catch (error) {
       console.error("Failed to update settings:", error);
@@ -82,27 +110,14 @@ const Settings = () => {
     }
   };
 
-  const handleLogoUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
 
-    if (!file || !settings) {
+    if (!file) {
       return;
     }
 
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      setSettings({
-        ...settings,
-        logoUrl: result,
-        initials: settings.initials || "",
-      });
-    };
-
-    reader.readAsDataURL(file);
+    setLogoFile(file);
   };
 
   if (loading) {
@@ -244,94 +259,94 @@ const Settings = () => {
         </div>
       </section>
 
-     <section className="mt-6 border border-gray-200 bg-white p-6 shadow-sm">
-  <div>
-    <h2 className="text-lg font-semibold text-gray-900">
-      Digital Menu QR Code
-    </h2>
+      <section className="mt-6 border border-gray-200 bg-white p-6 shadow-sm">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">
+            Digital Menu QR Code
+          </h2>
 
-    <p className="mt-1 text-sm text-gray-500">
-      Customers can scan this QR code to open your digital menu.
-    </p>
-  </div>
+          <p className="mt-1 text-sm text-gray-500">
+            Customers can scan this QR code to open your digital menu.
+          </p>
+        </div>
 
-  <div className="mt-6 flex flex-col items-center gap-6 rounded-xl border border-gray-200 bg-gray-50 p-6 sm:flex-row sm:items-center">
-    {/* QR Code */}
-    <div
-      id="digital-menu-qr"
-      className="rounded-xl bg-white p-4 shadow-sm"
-    >
-      <QRCodeCanvas
-        value={digitalMenuUrl}
-        size={220}
-        bgColor="#ffffff"
-        fgColor="#211e1b"
-        level="H"
-        includeMargin
-      />
-    </div>
+        <div className="mt-6 flex flex-col items-center gap-6 rounded-xl border border-gray-200 bg-gray-50 p-6 sm:flex-row sm:items-center">
+          {/* QR Code */}
+          <div
+            id="digital-menu-qr"
+            className="rounded-xl bg-white p-4 shadow-sm"
+          >
+            <QRCodeCanvas
+              value={digitalMenuUrl}
+              size={220}
+              bgColor="#ffffff"
+              fgColor="#211e1b"
+              level="H"
+              includeMargin
+            />
+          </div>
 
-    {/* Information */}
-    <div className="text-center sm:text-left">
-      <h3 className="text-base font-semibold text-gray-900">
-        {settings.restaurantName}
-      </h3>
+          {/* Information */}
+          <div className="text-center sm:text-left">
+            <h3 className="text-base font-semibold text-gray-900">
+              {settings.restaurantName}
+            </h3>
 
-      <p className="mt-2 text-sm text-gray-500">
-        Scan to view our digital menu.
-      </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Scan to view our digital menu.
+            </p>
 
-      <p className="mt-3 break-all text-xs text-gray-400">
-        {digitalMenuUrl}
-      </p>
+            <p className="mt-3 break-all text-xs text-gray-400">
+              {digitalMenuUrl}
+            </p>
 
-      <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-        <button
-          type="button"
-          onClick={() => {
-            const canvas = document.querySelector(
-              "#digital-menu-qr canvas",
-            ) as HTMLCanvasElement | null;
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => {
+                  const canvas = document.querySelector(
+                    "#digital-menu-qr canvas",
+                  ) as HTMLCanvasElement | null;
 
-            if (!canvas) {
-              toast.error("Unable to generate QR code.");
-              return;
-            }
+                  if (!canvas) {
+                    toast.error("Unable to generate QR code.");
+                    return;
+                  }
 
-            const link = document.createElement("a");
-            link.download = `${settings.restaurantName}-digital-menu-qr.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
+                  const link = document.createElement("a");
+                  link.download = `${settings.restaurantName}-digital-menu-qr.png`;
+                  link.href = canvas.toDataURL("image/png");
+                  link.click();
 
-            toast.success("QR code downloaded.");
-          }}
-          className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
-        >
-          Download QR
-        </button>
+                  toast.success("QR code downloaded.");
+                }}
+                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100"
+              >
+                Download QR
+              </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            const canvas = document.querySelector(
-              "#digital-menu-qr canvas",
-            ) as HTMLCanvasElement | null;
+              <button
+                type="button"
+                onClick={() => {
+                  const canvas = document.querySelector(
+                    "#digital-menu-qr canvas",
+                  ) as HTMLCanvasElement | null;
 
-            if (!canvas) {
-              toast.error("Unable to print QR code.");
-              return;
-            }
+                  if (!canvas) {
+                    toast.error("Unable to print QR code.");
+                    return;
+                  }
 
-            const qrImage = canvas.toDataURL("image/png");
+                  const qrImage = canvas.toDataURL("image/png");
 
-            const printWindow = window.open("", "_blank");
+                  const printWindow = window.open("", "_blank");
 
-            if (!printWindow) {
-              toast.error("Please allow pop-ups to print the QR code.");
-              return;
-            }
+                  if (!printWindow) {
+                    toast.error("Please allow pop-ups to print the QR code.");
+                    return;
+                  }
 
-            printWindow.document.write(`
+                  printWindow.document.write(`
               <html>
                 <head>
                   <title>${settings.restaurantName} - Digital Menu QR</title>
@@ -379,20 +394,20 @@ const Settings = () => {
               </html>
             `);
 
-            printWindow.document.close();
+                  printWindow.document.close();
 
-            printWindow.onload = () => {
-              printWindow.print();
-            };
-          }}
-          className="rounded-lg bg-[#211e1b] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#342f2a]"
-        >
-          Print QR
-        </button>
-      </div>
-    </div>
-  </div>
-</section>
+                  printWindow.onload = () => {
+                    printWindow.print();
+                  };
+                }}
+                className="rounded-lg bg-[#211e1b] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#342f2a]"
+              >
+                Print QR
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
     </form>
   );
 };

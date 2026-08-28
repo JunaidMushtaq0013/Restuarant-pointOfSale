@@ -10,6 +10,8 @@ export interface OrderItemType {
   quantity: number;
 
   total: number;
+
+  note?:string;
 }
 
 export interface OrderType {
@@ -55,10 +57,11 @@ export interface CreateOrderPayload {
 
   customerPhone?: string;
 
-  items: {
-    menu: Types.ObjectId;
-    quantity: number;
-  }[];
+items: {
+  menu: Types.ObjectId;
+  quantity: number;
+  note?: string;
+}[];
 
   orderType: "Dine In" | "Takeaway";
 

@@ -28,6 +28,10 @@ const orderItemSchema = new Schema(
       required: true,
       min: 0,
     },
+    note: {
+  type: String,
+  trim: true,
+},
   },
   {
     _id: false,

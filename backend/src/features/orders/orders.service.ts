@@ -21,20 +21,18 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
     if (!settings) {
       throw new Error("Restaurant settings not found.");
     }
-const now = new Date();
+    const now = new Date();
 
-const indiaTime = new Intl.DateTimeFormat("en-IN", {
-  timeZone: "Asia/Kolkata",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false,
-}).format(now);
+    const indiaTime = new Intl.DateTimeFormat("en-IN", {
+      timeZone: "Asia/Kolkata",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(now);
 
-const [currentHour, currentMinute] =
-  indiaTime.split(":").map(Number);
+    const [currentHour, currentMinute] = indiaTime.split(":").map(Number);
 
-const currentMinutes =
-  currentHour * 60 + currentMinute;
+    const currentMinutes = currentHour * 60 + currentMinute;
 
     const [openingHour, openingMinute] = settings.openingTime
       .split(":")
@@ -162,6 +160,7 @@ const currentMinutes =
         price: menuItem.sellingPrice,
         quantity: item.quantity,
         total,
+        note: item.note,
       });
     }
 
