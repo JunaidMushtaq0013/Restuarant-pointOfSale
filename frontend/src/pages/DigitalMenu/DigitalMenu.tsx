@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import api from "../../api/axious";
+import { toast } from "react-toastify";
 
 interface PublicMenuItem {
   _id: string;
@@ -22,12 +23,23 @@ interface PublicSettings {
   currency: string;
 }
 
+
+
 const DigitalMenu = () => {
   const [menu, setMenu] = useState<PublicMenuItem[]>([]);
   const [settings, setSettings] = useState<PublicSettings | null>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [table, setTable] = useState<{
+  _id: string;
+  tableNumber: number;
+  capacity: number;
+  status: string;
+} | null>(null);
+
+const [tableLoading, setTableLoading] = useState(true);
 
   useEffect(() => {
     const fetchDigitalMenu = async () => {
@@ -53,6 +65,31 @@ const DigitalMenu = () => {
     fetchDigitalMenu();
   }, []);
 
+  useEffect(() => {
+    const getTableFromQr = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const tableToken = params.get("tableToken");
+
+        if (!tableToken) {
+          toast.error("Invalid table QR code.");
+          return;
+        }
+
+        const response = await api.get(`/tables/qr/${tableToken}`);
+
+        setTable(response.data.data);
+      } catch (error) {
+        console.error("Failed to identify table:", error);
+        toast.error("Invalid or inactive table QR code.");
+      } finally {
+        setTableLoading(false);
+      }
+    };
+
+    getTableFromQr();
+  }, []);
+
   const groupedMenu = menu.reduce<Record<string, PublicMenuItem[]>>(
     (groups, item) => {
       const categoryName = item.category.name;
@@ -71,9 +108,7 @@ const DigitalMenu = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f7f3ed] px-4">
-        <p className="text-center text-sm text-gray-500">
-          Loading menu...
-        </p>
+        <p className="text-center text-sm text-gray-500">Loading menu...</p>
       </div>
     );
   }
@@ -127,6 +162,14 @@ const DigitalMenu = () => {
           <div className="mt-1 text-xs text-white/50 sm:mt-2 sm:text-sm">
             {settings.phone}
           </div>
+
+          {tableLoading ? (
+            <p>Identifying table...</p>
+          ) : table ? (
+            <p>Table {table.tableNumber}</p>
+          ) : (
+            <p>Unable to identify table.</p>
+          )}
         </div>
       </header>
 
@@ -137,9 +180,7 @@ const DigitalMenu = () => {
             {Object.keys(groupedMenu).map((categoryName) => (
               <a
                 key={categoryName}
-                href={`#${categoryName
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")}`}
+                href={`#${categoryName.toLowerCase().replace(/\s+/g, "-")}`}
                 className="shrink-0 text-xs font-medium text-[#5f5750] transition hover:text-[#211e1b] sm:text-sm"
               >
                 {categoryName}
@@ -185,8 +226,7 @@ const DigitalMenu = () => {
                 </div>
 
                 <span className="shrink-0 text-xs text-[#9a8e82] sm:text-sm">
-                  {items.length}{" "}
-                  {items.length === 1 ? "item" : "items"}
+                  {items.length} {items.length === 1 ? "item" : "items"}
                 </span>
               </div>
 

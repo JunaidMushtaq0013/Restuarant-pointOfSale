@@ -8,6 +8,8 @@ import {
   updateTableStatusController,
   getInactiveTablesController,
   activateTableController,
+  getTableQrController,
+  getTableByQrTokenController,
 } from "./tables.controller.js";
 import { authenticate } from "../../middleware/authenticate.js";
 import { authorize } from "../../middleware/authorize.js";
@@ -33,6 +35,19 @@ router.get(
   authorize("Manager"),
   getInactiveTablesController,
 );
+
+router.get(
+  "/:id/qr",
+  authenticate,
+  authorize("Manager"),
+  getTableQrController,
+);
+
+router.get(
+  "/qr/:qrToken",
+  getTableByQrTokenController,
+);
+
 router.patch(
   "/:id/activate",
   authenticate,

@@ -8,6 +8,8 @@ import {
   deleteTableService,
   updateTableStatusService,
   activateTableService,
+  getTableQrService,
+  getTableByQrTokenService,
 } from "./tables.service.js";
 
 export const createTableController = async (
@@ -23,6 +25,7 @@ export const createTableController = async (
   });
 };
 
+
 export const getTablesController = async (
   req: Request,
   res: Response
@@ -33,6 +36,19 @@ export const getTablesController = async (
     status: "success",
     message: "Tables retrieved successfully.",
     data: tables,
+  });
+};
+
+export const getTableByQrTokenController = async (
+  req: Request<{ qrToken: string }>,
+  res: Response,
+) => {
+  const table = await getTableByQrTokenService(req.params.qrToken);
+
+  res.status(200).json({
+    status: "success",
+    message: "Table identified successfully.",
+    data: table,
   });
 };
 
@@ -123,5 +139,18 @@ export const updateTableStatusController = async (
     status: "success",
     message: "Table status updated successfully.",
     data: table,
+  });
+};
+
+export const getTableQrController = async (
+  req: Request<{ id: string }>,
+  res: Response,
+) => {
+  const qrData = await getTableQrService(req.params.id);
+
+  res.status(200).json({
+    status: "success",
+    message: "Table QR data generated successfully.",
+    data: qrData,
   });
 };

@@ -1,6 +1,9 @@
 import { Table } from "./tables.model.js";
 import { TableType } from "./tables.types.js";
 
+import { randomUUID } from "crypto";
+
+
 export const createTableService = async (payload: TableType) => {
   const tableExists = await Table.findOne({
     tableNumber: payload.tableNumber,
@@ -10,7 +13,10 @@ export const createTableService = async (payload: TableType) => {
     throw new Error("Table number already exists.");
   }
 
-  return await Table.create(payload);
+  return await Table.create({
+    ...payload,
+    qrToken: randomUUID(),
+  });
 };
 
 export const getTablesService = async () => {
@@ -52,10 +58,9 @@ export const activateTableService = async (id: string) => {
   return table;
 };
 
-
 export const updateTableService = async (
   id: string,
-  payload: Partial<TableType>
+  payload: Partial<TableType>,
 ) => {
   const table = await Table.findById(id);
 
@@ -77,14 +82,10 @@ export const updateTableService = async (
     }
   }
 
-  return await Table.findByIdAndUpdate(
-    id,
-    payload,
-    {
-      new: true,
-      runValidators: true,
-    }
-  );
+  return await Table.findByIdAndUpdate(id, payload, {
+    new: true,
+    runValidators: true,
+  });
 };
 
 export const deleteTableService = async (id: string) => {
@@ -99,6 +100,7 @@ export const deleteTableService = async (id: string) => {
   }
 
   table.isActive = false;
+
   await table.save();
 
   return table;
@@ -106,7 +108,7 @@ export const deleteTableService = async (id: string) => {
 
 export const updateTableStatusService = async (
   id: string,
-  status: TableType["status"]
+  status: TableType["status"],
 ) => {
   const table = await Table.findOne({
     _id: id,
@@ -122,4 +124,47 @@ export const updateTableStatusService = async (
   await table.save();
 
   return table;
+};
+
+export const getTableQrService = async (id: string) => {
+  const table = await Table.findOne({
+    _id: id,
+    isActive: true,
+  });
+
+  if (!table) {
+    throw new Error("Active table not found.");
+  }
+
+  const frontendUrl = process.env.FRONTEND_URL;
+
+  if (!frontendUrl) {
+    throw new Error("FRONTEND_URL is not configured.");
+  }
+
+  const menuUrl = `${frontendUrl}/digital-menu?tableToken=${table.qrToken}`;
+
+  return {
+    tableNumber: table.tableNumber,
+    qrToken: table.qrToken,
+    menuUrl,
+  };
+};
+
+export const getTableByQrTokenService = async (qrToken: string) => {
+  const table = await Table.findOne({
+    qrToken,
+    isActive: true,
+  });
+
+  if (!table) {
+    throw new Error("Invalid or inactive table QR code.");
+  }
+
+  return {
+    _id: table._id,
+    tableNumber: table.tableNumber,
+    capacity: table.capacity,
+    status: table.status,
+  };
 };

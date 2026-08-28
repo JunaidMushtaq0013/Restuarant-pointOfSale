@@ -6,6 +6,8 @@ import { useAuth } from "../../context/AuthContext";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import ActionIcon from "../../components/common/ActionIcon";
 import { toast } from "react-toastify";
+import { MdQrCode2 } from "react-icons/md";
+import { QRCodeCanvas } from "qrcode.react";
 
 interface Table {
   _id: string;
@@ -26,6 +28,14 @@ const Tables = () => {
     null,
   );
   const [tableToRelease, setTableToRelease] = useState<Table | null>(null);
+
+  const [qrData, setQrData] = useState<{
+    tableNumber: number;
+    qrToken: string;
+    menuUrl: string;
+  } | null>(null);
+
+  const [showQrModal, setShowQrModal] = useState(false);
 
   const { user } = useAuth();
 
@@ -136,6 +146,22 @@ const Tables = () => {
     } catch (error) {
       console.error("Failed to release table:", error);
       toast.error("Failed to release table.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const generateQr = async (id: string) => {
+    try {
+      setSubmitting(true);
+
+      const response = await api.get(`/tables/${id}/qr`);
+
+      setQrData(response.data.data);
+      setShowQrModal(true);
+    } catch (error) {
+      console.error("Failed to generate QR:", error);
+      toast.error("Failed to generate QR code.");
     } finally {
       setSubmitting(false);
     }
@@ -253,6 +279,20 @@ const Tables = () => {
               >
                 <ActionIcon label="Edit" />
               </button>
+
+              {user?.role === "Manager" && (
+                <button
+                  onClick={() => generateQr(table._id)}
+                  disabled={submitting}
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                  aria-label={`Generate QR for table ${table.tableNumber}`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <MdQrCode2 size={18} />
+                    <span>QR Code</span>
+                  </div>
+                </button>
+              )}
 
               {(user?.role === "Manager" || user?.role === "Cashier") &&
                 table.status === "Occupied" && (
@@ -391,6 +431,70 @@ const Tables = () => {
           setTableToRelease(null);
         }}
       />
+
+      {showQrModal && qrData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="text-center">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                Restaurant Table
+              </p>
+
+              <h2 className="mt-1 text-2xl font-bold text-gray-900">
+                Table {qrData.tableNumber}
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Scan this QR code to view the digital menu.
+              </p>
+
+              <div className="mx-auto mt-6 flex w-fit rounded-xl border border-gray-200 bg-white p-4">
+                <QRCodeCanvas
+                  id="table-qr-code"
+                  value={qrData.menuUrl}
+                  size={240}
+                  level="H"
+                />
+              </div>
+
+              <p className="mt-4 break-all text-xs text-gray-400">
+                {qrData.menuUrl}
+              </p>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowQrModal(false)}
+                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  Close
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const canvas = document.getElementById(
+                      "table-qr-code",
+                    ) as HTMLCanvasElement | null;
+
+                    if (!canvas) {
+                      return;
+                    }
+
+                    const link = document.createElement("a");
+                    link.download = `table-${qrData.tableNumber}-qr.png`;
+                    link.href = canvas.toDataURL("image/png");
+                    link.click();
+                  }}
+                  className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-800"
+                >
+                  Download QR
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

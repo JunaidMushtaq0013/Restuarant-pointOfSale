@@ -5,4 +5,5 @@ export interface TableType {
   capacity: number;
   status?: TableStatus;
   isActive?: boolean;
+  qrToken: string;
 }

@@ -20,14 +20,19 @@ const tableSchema = new Schema<TableType>(
       enum: ["Available", "Occupied", "Reserved"],
       default: "Available",
     },
-      isActive: {
+    isActive: {
       type: Boolean,
       default: true,
+    },
+    qrToken: {
+      type: String,
+      unique: true,
+      required: true,
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export const Table = model<TableType>("Table", tableSchema);
