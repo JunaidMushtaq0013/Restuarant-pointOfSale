@@ -63,6 +63,12 @@ const orderSchema = new Schema<OrderType>(
       type: String,
       trim: true,
     },
+    orderAccessToken: {
+      type: String,
+      unique: true,
+      sparse: true,
+      index: true,
+    },
 
     items: {
       type: [orderItemSchema],

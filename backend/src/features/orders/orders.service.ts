@@ -8,6 +8,8 @@ import mongoose from "mongoose";
 import { Settings } from "../settings/settings.model.js";
 import { Table } from "../tables/tables.model.js";
 
+import crypto from "crypto";
+
 export const createOrderService = async (payload: CreateOrderPayload) => {
   const session = await mongoose.startSession();
 
@@ -189,6 +191,12 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
     // Grand total
     const grandTotal = totalAfterDiscount + gstAmount + serviceChargeAmount;
 
+    let orderAccessToken: string | undefined;
+
+    if (payload.source === "QR") {
+      orderAccessToken = crypto.randomBytes(32).toString("hex");
+    }
+
     // Create order
     const orders = await Order.create(
       [
@@ -196,6 +204,8 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
           orderNumber,
 
           source: payload.source,
+
+          orderAccessToken,
 
           customer: customer?._id,
 
@@ -259,6 +269,21 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
 };
 
 
+export const getQrOrderByTokenService = async (token: string) => {
+  const order = await Order.findOne({
+    orderAccessToken: token,
+    source: "QR",
+  })
+    .populate("customer", "name phone")
+    .populate("items.menu", "name sellingPrice type")
+    .populate("table", "tableNumber capacity status");
+
+  if (!order) {
+    throw new Error("Order not found.");
+  }
+
+  return order;
+};
 
 export const getAllOrdersService = async (
   page = 1,
@@ -537,5 +562,3 @@ export const cancelOrderService = async (id: string) => {
     session.endSession();
   }
 };
-
-

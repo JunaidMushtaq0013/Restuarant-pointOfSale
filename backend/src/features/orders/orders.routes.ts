@@ -5,6 +5,8 @@ import {
   getAllOrdersController,
   getOrderByIdController,
 
+  getQrOrderByTokenController,
+
   updateOrderStatusController,
   updatePaymentStatusController,
 } from "./orders.controller.js";
@@ -24,6 +26,11 @@ router.post(
 router.post(
   "/qr",
   createOrderController,
+);
+
+router.get(
+  "/qr/status/:token",
+  getQrOrderByTokenController,
 );
 
 

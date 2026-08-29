@@ -4,6 +4,7 @@ import {
   createOrderService,
   getAllOrdersService,
   getOrderByIdService,
+  getQrOrderByTokenService,
   updateOrderStatusService,
   updatePaymentStatusService,
 } from "./orders.service.js";
@@ -37,6 +38,30 @@ export const createOrderController = async (
     res.status(201).json({
       status: "success",
       message: "Order created successfully",
+      data: order,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getQrOrderByTokenController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { token } = req.params;
+
+    if (!token || Array.isArray(token)) {
+      throw new Error("Order access token is required.");
+    }
+
+    const order = await getQrOrderByTokenService(token);
+
+    res.status(200).json({
+      status: "success",
+      message: "QR order retrieved successfully",
       data: order,
     });
   } catch (error) {

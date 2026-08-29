@@ -17,6 +17,8 @@ export interface OrderType {
   customer?: Types.ObjectId;
   customerName?: string;
 
+  orderAccessToken?: string;
+
   items: OrderItemType[];
 
   orderType: "Dine In" | "Takeaway";

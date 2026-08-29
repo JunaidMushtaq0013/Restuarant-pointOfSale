@@ -32,6 +32,7 @@ const Kitchen = () => {
     const getKitchenOrders = async () => {
       try {
         const response = await api.get("/orders");
+
         const kitchenOrders = (response.data.data as KitchenOrder[]).filter(
           (order) => activeKitchenStatuses.includes(order.status),
         );
