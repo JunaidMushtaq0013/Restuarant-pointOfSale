@@ -195,6 +195,8 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
         {
           orderNumber,
 
+          source: payload.source,
+
           customer: customer?._id,
 
           customerName: customer?.name,
@@ -255,6 +257,8 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
     session.endSession();
   }
 };
+
+
 
 export const getAllOrdersService = async (
   page = 1,
@@ -533,3 +537,5 @@ export const cancelOrderService = async (id: string) => {
     session.endSession();
   }
 };
+
+

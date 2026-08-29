@@ -9,6 +9,7 @@ import {
   toggleCustomerActiveController,
   deleteCustomerController,
   getCustomerOrdersController,
+  getCustomerByPhoneController,
 } from "./customer.controller.js";
 
 import { authenticate } from "../../middleware/authenticate.js";
@@ -28,6 +29,10 @@ router.get(
   authenticate,
   authorize("Manager", "Cashier", "Waiter"),
   getAllCustomersController,
+);
+router.get(
+  "/phone",
+  getCustomerByPhoneController,
 );
 
 router.get(

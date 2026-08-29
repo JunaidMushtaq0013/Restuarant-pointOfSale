@@ -71,6 +71,15 @@ export const getCustomerByIdService = async (id: string) => {
   return customer;
 };
 
+export const getCustomerByPhoneService = async (phone: string) => {
+  const customer = await Customer.findOne({
+    phone: phone.trim(),
+    isActive: true,
+  });
+
+  return customer;
+};
+
 export const getCustomerOrdersService = async (customerId: string) => {
   return await Order.find({
     customer: customerId,
@@ -123,3 +132,4 @@ export const deleteCustomerService = async (id: string) => {
 
   return customer;
 };
+

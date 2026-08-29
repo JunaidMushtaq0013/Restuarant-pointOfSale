@@ -4,6 +4,7 @@ import {
   createOrderController,
   getAllOrdersController,
   getOrderByIdController,
+
   updateOrderStatusController,
   updatePaymentStatusController,
 } from "./orders.controller.js";
@@ -19,6 +20,7 @@ router.post(
   authorize("Manager", "Cashier", "Waiter"),
   createOrderController,
 );
+
 
 router.get(
   "/",

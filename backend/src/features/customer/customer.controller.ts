@@ -9,6 +9,7 @@ import {
   toggleCustomerActiveService,
   deleteCustomerService,
   getCustomerOrdersService,
+  getCustomerByPhoneService,
 } from "./customer.service.js";
 
 export const createCustomerController = async (
@@ -76,6 +77,30 @@ export const getAllActiveCustomersController = async (
   } catch (error) {
     next(error);
   }
+};
+
+export const getCustomerByPhoneController = async (
+  req: Request,
+  res: Response,
+) => {
+  const { phone } = req.query;
+
+  if (!phone || typeof phone !== "string") {
+    return res.status(400).json({
+      status: "fail",
+      message: "Phone number is required.",
+    });
+  }
+
+  const customer = await getCustomerByPhoneService(phone);
+
+  res.status(200).json({
+    status: "success",
+    message: customer
+      ? "Customer found."
+      : "Customer not found.",
+    data: customer,
+  });
 };
 
 export const getCustomerOrdersController = async (

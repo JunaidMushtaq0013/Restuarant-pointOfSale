@@ -4,14 +4,14 @@ import { toast } from "react-toastify";
 import PaymentMethodModal from "../../components/orders/PaymentMethodModal";
 import { useAuth } from "../../context/AuthContext";
 
-interface Category {
+export interface Category {
   _id: string;
   name: string;
   description?: string;
   isActive: boolean;
 }
 
-interface InventoryItem {
+export interface InventoryItem {
   _id: string;
   name: string;
   itemType: "Raw Material" | "Ready Item";
@@ -22,7 +22,7 @@ interface InventoryItem {
   isActive: boolean;
 }
 
-interface MenuItem {
+export interface MenuItem {
   _id: string;
   name: string;
   description?: string;
@@ -333,6 +333,9 @@ const NewOrder = () => {
       setPlacingOrder(true);
 
       const payload = {
+    
+       source: "POS",
+
         items: cart.map((item) => ({
           menu: item.menu._id,
           quantity: item.quantity,

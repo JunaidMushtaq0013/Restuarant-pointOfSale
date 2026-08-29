@@ -29,9 +29,9 @@ const orderItemSchema = new Schema(
       min: 0,
     },
     note: {
-  type: String,
-  trim: true,
-},
+      type: String,
+      trim: true,
+    },
   },
   {
     _id: false,
@@ -47,11 +47,18 @@ const orderSchema = new Schema<OrderType>(
       trim: true,
     },
 
+    source: {
+      type: String,
+      enum: ["QR", "POS"],
+      required: true,
+    },
+
     customer: {
       type: Schema.Types.ObjectId,
       ref: "Customer",
       required: false,
     },
+
     customerName: {
       type: String,
       trim: true,
@@ -67,6 +74,7 @@ const orderSchema = new Schema<OrderType>(
       enum: ["Dine In", "Takeaway"],
       required: true,
     },
+
     table: {
       type: Schema.Types.ObjectId,
       ref: "Table",

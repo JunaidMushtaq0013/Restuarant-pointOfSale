@@ -2,23 +2,19 @@ import { Types } from "mongoose";
 
 export interface OrderItemType {
   menu: Types.ObjectId;
-
   name: string;
-
   price: number;
-
   quantity: number;
-
   total: number;
-
-  note?:string;
+  note?: string;
 }
 
 export interface OrderType {
   orderNumber: string;
 
-  customer?: Types.ObjectId;
+  source: "QR" | "POS";
 
+  customer?: Types.ObjectId;
   customerName?: string;
 
   items: OrderItemType[];
@@ -30,15 +26,12 @@ export interface OrderType {
   subTotal: number;
 
   discountPercentage: number;
-
   discountAmount: number;
 
   gstPercentage: number;
-
   gstAmount: number;
 
   serviceChargePercentage: number;
-
   serviceChargeAmount: number;
 
   grandTotal: number;
@@ -53,15 +46,16 @@ export interface OrderType {
 }
 
 export interface CreateOrderPayload {
-  customerName?: string;
+  source: "QR" | "POS";
 
+  customerName?: string;
   customerPhone?: string;
 
-items: {
-  menu: Types.ObjectId;
-  quantity: number;
-  note?: string;
-}[];
+  items: {
+    menu: Types.ObjectId;
+    quantity: number;
+    note?: string;
+  }[];
 
   orderType: "Dine In" | "Takeaway";
 

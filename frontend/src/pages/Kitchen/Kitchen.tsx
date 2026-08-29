@@ -8,6 +8,7 @@ interface KitchenOrderItem {
   _id?: string;
   name: string;
   quantity: number;
+  note?: string;
 }
 
 interface KitchenOrder {
@@ -131,7 +132,16 @@ const Kitchen = () => {
                       key={`${item._id ?? item.name}-${index}`}
                       className="flex justify-between gap-4"
                     >
-                      <span>{item.name}</span>
+                      <div>
+                        <p>{item.name}</p>
+
+                        {item.note && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            Note: {item.note}
+                          </p>
+                        )}
+                      </div>
+
                       <span className="font-medium">x{item.quantity}</span>
                     </li>
                   ))}
