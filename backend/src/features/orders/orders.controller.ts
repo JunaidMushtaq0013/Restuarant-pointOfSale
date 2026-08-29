@@ -14,14 +14,22 @@ export const createOrderController = async (
   next: NextFunction,
 ) => {
   try {
+    const source = req.user ? "POS" : "QR";
+
     const payload = {
       ...req.body,
+
+      source,
+
       discountPercentage:
-        req.user.role === "Cashier" || req.user.role === "Manager"
+        req.user?.role === "Cashier" || req.user?.role === "Manager"
           ? (req.body.discountPercentage ?? 0)
           : 0,
+
       paymentStatus:
-        req.user.role === "Waiter" ? "Pending" : req.body.paymentStatus,
+        req.user?.role === "Waiter"
+          ? "Pending"
+          : req.body.paymentStatus,
     };
 
     const order = await createOrderService(payload);
@@ -35,7 +43,6 @@ export const createOrderController = async (
     next(error);
   }
 };
-
 
 
 export const getAllOrdersController = async (
