@@ -276,7 +276,7 @@ const DigitalMenu = () => {
         paymentStatus: "Pending",
       };
 
-      const response = await api.post("/orders", payload);
+      const response = await api.post("/orders/qr", payload);
 
       console.log("QR order created:", response.data);
 

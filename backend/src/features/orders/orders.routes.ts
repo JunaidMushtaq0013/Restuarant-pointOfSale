@@ -21,6 +21,11 @@ router.post(
   createOrderController,
 );
 
+router.post(
+  "/qr",
+  createOrderController,
+);
+
 
 router.get(
   "/",
