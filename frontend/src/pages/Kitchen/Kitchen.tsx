@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import api from "../../api/axious";
+import { socket } from "../../socket";
 
 type KitchenStatus = "Pending" | "Preparing" | "Ready" | "Served" | "Cancelled";
 
@@ -48,6 +49,34 @@ const Kitchen = () => {
 
     getKitchenOrders();
   }, []);
+
+  useEffect(() => {
+  const handleNewOrder = (order: KitchenOrder) => {
+    console.log("🍽️ New order received in Kitchen:", order);
+
+    if (!activeKitchenStatuses.includes(order.status)) {
+      return;
+    }
+
+    setOrders((currentOrders) => {
+      const alreadyExists = currentOrders.some(
+        (currentOrder) => currentOrder._id === order._id,
+      );
+
+      if (alreadyExists) {
+        return currentOrders;
+      }
+
+      return [order, ...currentOrders];
+    });
+  };
+
+  socket.on("newOrder", handleNewOrder);
+
+  return () => {
+    socket.off("newOrder", handleNewOrder);
+  };
+}, []);
 
   const updateStatus = async (order: KitchenOrder) => {
     const nextStatus = order.status === "Pending" ? "Preparing" : "Ready";

@@ -5,6 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import ViewOrderModal from "../../components/order/veiwOrderModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import ActionIcon from "../../components/common/ActionIcon";
+import { socket } from "../../socket";
 
 export interface Order {
   _id: string;
@@ -204,6 +205,63 @@ const Orders = () => {
 
     void loadOrders();
   }, [getOrders]);
+
+
+
+  // =========================
+// Real-Time Order Updates
+// =========================
+
+useEffect(() => {
+  const handleNewOrder = (newOrder: Order) => {
+    console.log("🍽️ New order received:", newOrder.orderNumber);
+
+    setOrders((currentOrders) => {
+      const alreadyExists = currentOrders.some(
+        (order) => order._id === newOrder._id,
+      );
+
+      if (alreadyExists) {
+        return currentOrders;
+      }
+
+      return [newOrder, ...currentOrders];
+    });
+
+    setPagination((prev) => ({
+      ...prev,
+      totalItems: prev.totalItems + 1,
+    }));
+  };
+
+  const handleOrderStatusUpdated = (updatedOrder: Order) => {
+    console.log(
+      "🔄 Order status updated:",
+      updatedOrder.orderNumber,
+      updatedOrder.status,
+    );
+
+    setOrders((currentOrders) =>
+      currentOrders.map((order) =>
+        order._id === updatedOrder._id ? updatedOrder : order,
+      ),
+    );
+
+    setSelectedOrder((currentOrder) =>
+      currentOrder?._id === updatedOrder._id
+        ? updatedOrder
+        : currentOrder,
+    );
+  };
+
+  socket.on("newOrder", handleNewOrder);
+  socket.on("orderStatusUpdated", handleOrderStatusUpdated);
+
+  return () => {
+    socket.off("newOrder", handleNewOrder);
+    socket.off("orderStatusUpdated", handleOrderStatusUpdated);
+  };
+}, []);
 
   // =========================
   // Search

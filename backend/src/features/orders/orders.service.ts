@@ -10,6 +10,8 @@ import { Table } from "../tables/tables.model.js";
 
 import crypto from "crypto";
 
+import { getIO } from "../../socket.js";
+
 export const createOrderService = async (payload: CreateOrderPayload) => {
   const session = await mongoose.startSession();
 
@@ -254,11 +256,20 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
     // Commit transaction
     await session.commitTransaction();
 
-    // Return populated order
-    return await Order.findById(order._id)
+    // Get populated order
+    const populatedOrder = await Order.findById(order._id)
       .populate("customer", "name phone")
       .populate("items.menu", "name sellingPrice type")
       .populate("table", "tableNumber capacity status");
+
+    if (!populatedOrder) {
+      throw new Error("Order could not be retrieved after creation.");
+    }
+
+    // Notify connected clients about the new order
+    getIO().emit("newOrder", populatedOrder);
+
+    return populatedOrder;
   } catch (error) {
     await session.abortTransaction();
 
@@ -267,7 +278,6 @@ export const createOrderService = async (payload: CreateOrderPayload) => {
     session.endSession();
   }
 };
-
 
 export const getQrOrderByTokenService = async (token: string) => {
   const order = await Order.findOne({
@@ -387,11 +397,20 @@ export const updateOrderStatusService = async (
 
     await session.commitTransaction();
 
-    // Step 9: Return updated order with details used by the Orders screen.
-    return await Order.findById(order._id)
+    // Get updated order with details
+    const updatedOrder = await Order.findById(order._id)
       .populate("customer", "name phone")
       .populate("items.menu", "name sellingPrice type")
       .populate("table", "tableNumber capacity status");
+
+    if (!updatedOrder) {
+      throw new Error("Updated order could not be retrieved.");
+    }
+
+    // Notify connected clients about the status change
+    getIO().emit("orderStatusUpdated", updatedOrder);
+
+    return updatedOrder;
   } catch (error) {
     await session.abortTransaction();
     throw error;

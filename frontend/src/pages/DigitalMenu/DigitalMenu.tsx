@@ -6,6 +6,7 @@ import DigitalMenuCartModal from "../../components/digitalmenu/digitalmenuCartmo
 import DigitalMenuCheckoutModal from "../../components/digitalmenu/DigitalMenuCheckoutModal";
 import DigitalMenuOrderStatus from "../../components/digitalmenu/DigitalMenuOrderStatus";
 
+import { socket } from "../../socket";
 interface PublicMenuItem {
   _id: string;
   name: string;
@@ -51,7 +52,27 @@ interface ActiveOrder {
 const CART_STORAGE_KEY = "digital_menu_cart";
 const ORDER_TOKEN_STORAGE_KEY = "digital_menu_order_token";
 
+// Presentational only — background tint for the active-order banner.
+const STATUS_BG: Record<ActiveOrder["status"], string> = {
+  Pending: "bg-amber-50",
+  Preparing: "bg-[#B8924A]/10",
+  Ready: "bg-[#35513F]/10",
+  Served: "bg-stone-100",
+  Cancelled: "bg-red-50",
+};
+
 const DigitalMenu = () => {
+  useEffect(() => {
+    const handleNewOrder = (order: { orderNumber: string; status: string }) => {
+      console.log("🍽️ New order received:", order);
+    };
+
+    socket.on("newOrder", handleNewOrder);
+
+    return () => {
+      socket.off("newOrder", handleNewOrder);
+    };
+  }, []);
   const [menu, setMenu] = useState<PublicMenuItem[]>([]);
   const [settings, setSettings] = useState<PublicSettings | null>(null);
 
@@ -151,16 +172,13 @@ const DigitalMenu = () => {
         return;
       }
 
-      localStorage.setItem(
-        CART_STORAGE_KEY,
-        JSON.stringify(cart),
-      );
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
     } catch (error) {
       console.error("Failed to save cart to localStorage:", error);
     }
   }, [cart]);
 
-  // ================= LOAD + TRACK QR ORDER =================
+  // ================= RESTORE ACTIVE QR ORDER =================
 
   useEffect(() => {
     const token = localStorage.getItem(ORDER_TOKEN_STORAGE_KEY);
@@ -169,73 +187,84 @@ const DigitalMenu = () => {
       return;
     }
 
-    let interval: ReturnType<typeof setInterval>;
-
     const getActiveOrder = async () => {
       try {
-        const response = await api.get(
-          `/orders/qr/status/${token}`,
-        );
+        const response = await api.get(`/orders/qr/status/${token}`);
 
         const order = response.data.data;
 
-        // Order finished
-        if (
-          order.status === "Served" ||
-          order.status === "Cancelled"
-        ) {
+        if (order.status === "Served" || order.status === "Cancelled") {
           setActiveOrder(null);
-
-          localStorage.removeItem(
-            ORDER_TOKEN_STORAGE_KEY,
-          );
-
-          clearInterval(interval);
-
+          localStorage.removeItem(ORDER_TOKEN_STORAGE_KEY);
           return;
         }
 
-        // Order still active
         setActiveOrder({
           orderNumber: order.orderNumber,
           status: order.status,
         });
       } catch (error) {
-        console.error(
-          "Failed to load QR order:",
-          error,
-        );
+        console.error("Failed to restore active QR order:", error);
+
+        localStorage.removeItem(ORDER_TOKEN_STORAGE_KEY);
+        setActiveOrder(null);
       }
     };
 
-    // Fetch immediately
     getActiveOrder();
+  }, []);
 
-    // Check every 5 seconds
-    interval = setInterval(() => {
-      getActiveOrder();
-    }, 5000);
+  // socket useeffect
+  useEffect(() => {
+    const handleOrderStatusUpdated = (order: {
+      orderNumber: string;
+      status: "Pending" | "Preparing" | "Ready" | "Served" | "Cancelled";
+    }) => {
+      console.log("🔄 Order status updated:", order.orderNumber, order.status);
+
+      const token = localStorage.getItem("digital_menu_order_token");
+
+      if (!token) {
+        return;
+      }
+
+      if (order.status === "Served" || order.status === "Cancelled") {
+        setActiveOrder(null);
+
+        localStorage.removeItem("digital_menu_order_token");
+
+        return;
+      }
+
+      setActiveOrder({
+        orderNumber: order.orderNumber,
+        status: order.status,
+      });
+    };
+
+    socket.on("orderStatusUpdated", handleOrderStatusUpdated);
 
     return () => {
-      clearInterval(interval);
+      socket.off("orderStatusUpdated", handleOrderStatusUpdated);
     };
   }, []);
 
   // ================= GROUP MENU =================
 
-  const groupedMenu = menu.reduce<
-    Record<string, PublicMenuItem[]>
-  >((groups, item) => {
-    const categoryName = item.category.name;
+  const groupedMenu = menu.reduce<Record<string, PublicMenuItem[]>>(
+    (groups, item) => {
+      const categoryName = item.category.name;
 
-    if (!groups[categoryName]) {
-      groups[categoryName] = [];
-    }
+      if (!groups[categoryName]) {
+        groups[categoryName] = [];
+      }
 
-    groups[categoryName].push(item);
+      groups[categoryName].push(item);
 
-    return groups;
-  }, {});
+      return groups;
+    },
+    {},
+  );
 
   // ================= CART FUNCTIONS =================
 
@@ -301,17 +330,10 @@ const DigitalMenu = () => {
   };
 
   const removeFromCart = (menuId: string) => {
-    setCart((prevCart) =>
-      prevCart.filter(
-        (item) => item.menu !== menuId,
-      ),
-    );
+    setCart((prevCart) => prevCart.filter((item) => item.menu !== menuId));
   };
 
-  const updateCartNote = (
-    menuId: string,
-    note: string,
-  ) => {
+  const updateCartNote = (menuId: string, note: string) => {
     setCart((prevCart) =>
       prevCart.map((item) =>
         item.menu === menuId
@@ -326,10 +348,7 @@ const DigitalMenu = () => {
 
   // ================= PLACE QR ORDER =================
 
-  const placeQrOrder = async (
-    customerName: string,
-    customerPhone: string,
-  ) => {
+  const placeQrOrder = async (customerName: string, customerPhone: string) => {
     if (cart.length === 0) {
       toast.error("Your cart is empty.");
       return;
@@ -371,18 +390,12 @@ const DigitalMenu = () => {
         paymentStatus: "Pending",
       };
 
-      const response = await api.post(
-        "/orders/qr",
-        payload,
-      );
+      const response = await api.post("/orders/qr", payload);
 
       const createdOrder = response.data.data;
 
       // Save secure token
-      if (
-        createdOrder.source === "QR" &&
-        createdOrder.orderAccessToken
-      ) {
+      if (createdOrder.source === "QR" && createdOrder.orderAccessToken) {
         localStorage.setItem(
           ORDER_TOKEN_STORAGE_KEY,
           createdOrder.orderAccessToken,
@@ -403,14 +416,9 @@ const DigitalMenu = () => {
       // Close checkout
       setShowCheckout(false);
 
-      toast.success(
-        "Order placed successfully.",
-      );
+      toast.success("Order placed successfully.");
     } catch (error) {
-      console.error(
-        "Failed to place QR order:",
-        error,
-      );
+      console.error("Failed to place QR order:", error);
 
       toast.error(
         (
@@ -421,8 +429,7 @@ const DigitalMenu = () => {
               };
             };
           }
-        ).response?.data?.message ||
-          "Failed to place order. Please try again.",
+        ).response?.data?.message || "Failed to place order. Please try again.",
       );
     }
   };
@@ -431,10 +438,11 @@ const DigitalMenu = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f7f3ed] px-4">
-        <p className="text-center text-sm text-gray-500">
-          Loading menu...
-        </p>
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF6EF] px-6">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#E4DBC9] border-t-[#35513F]" />
+          <p className="text-sm text-[#8A8175]">Loading menu…</p>
+        </div>
       </div>
     );
   }
@@ -443,28 +451,32 @@ const DigitalMenu = () => {
 
   if (error || !settings) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#f7f3ed] px-4">
-        <p className="text-center text-sm text-red-500">
-          {error || "Unable to load menu."}
-        </p>
+      <div className="flex min-h-screen items-center justify-center bg-[#FAF6EF] px-6">
+        <div className="max-w-xs text-center">
+          <p className="font-serif text-lg text-[#1C1917]">Menu unavailable</p>
+          <p className="mt-2 text-sm text-[#9B4630]">
+            {error || "Unable to load menu."}
+          </p>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-[#f7f3ed] text-[#26221e]">
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const cartTotal = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0,
+  );
 
+  return (
+    <div className="min-h-screen bg-[#FAF6EF] text-[#1C1917]">
       {/* ================= HERO ================= */}
 
-      <header className="relative overflow-hidden bg-[#211e1b] text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.10),_transparent_35%)]" />
+      <header className="relative overflow-hidden bg-[#1C1917] text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(184,146,74,0.12),_transparent_45%)]" />
 
-        <div className="relative mx-auto max-w-5xl px-4 py-10 text-center sm:px-6 sm:py-16 md:py-20">
-
-          {/* Logo */}
-
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 shadow-2xl sm:mb-6 sm:h-24 sm:w-24">
-
+        <div className="relative mx-auto max-w-2xl px-5 pb-7 pt-8 text-center sm:max-w-5xl sm:px-6 sm:pb-14 sm:pt-16">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-white/15 bg-white/5 sm:mb-6 sm:h-24 sm:w-24">
             {settings.logoUrl ? (
               <img
                 src={settings.logoUrl}
@@ -472,374 +484,258 @@ const DigitalMenu = () => {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <span className="text-xl font-semibold tracking-wider sm:text-2xl">
-                {(
-                  settings.initials ||
-                  settings.restaurantName.slice(0, 2)
-                )
+              <span className="font-serif text-lg text-white/90 sm:text-2xl">
+                {(settings.initials || settings.restaurantName.slice(0, 2))
                   .slice(0, 2)
                   .toUpperCase()}
               </span>
             )}
-
           </div>
 
-          <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.3em] text-white/50 sm:mb-3 sm:text-xs sm:tracking-[0.35em]">
-            Welcome
-          </p>
-
-          <h1 className="break-words text-3xl font-semibold tracking-tight sm:text-5xl md:text-6xl">
+          <h1 className="break-words font-serif text-[28px] leading-tight tracking-tight sm:text-5xl md:text-6xl">
             {settings.restaurantName}
           </h1>
 
-          <div className="mx-auto mt-4 max-w-md text-xs leading-5 text-white/60 sm:mt-6 sm:text-sm">
+          <div className="mx-auto mt-3 max-w-xs text-[13px] leading-5 text-white/55 sm:max-w-md sm:mt-4 sm:text-sm">
             {settings.restaurantAddress}
           </div>
 
-          <div className="mt-1 text-xs text-white/50 sm:mt-2 sm:text-sm">
+          <div className="mt-1 text-[13px] text-white/45 sm:text-sm">
             {settings.phone}
           </div>
 
-          {tableLoading ? (
-            <p>Identifying table...</p>
-          ) : table ? (
-            <p>Table {table.tableNumber}</p>
-          ) : (
-            <p>Unable to identify table.</p>
-          )}
-
+          <div className="mt-4 flex justify-center sm:mt-6">
+            {tableLoading ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 px-3 py-1 text-xs text-white/50">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white/40" />
+                Finding your table…
+              </span>
+            ) : table ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-medium text-white/80">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#B8924A]" />
+                Table {table.tableNumber}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-red-400/30 bg-red-400/10 px-3 py-1 text-xs text-red-200">
+                Table not recognized
+              </span>
+            )}
+          </div>
         </div>
       </header>
 
+      {/* ================= ACTIVE ORDER BANNER ================= */}
+
+      {activeOrder && (
+        <div
+          className={`${STATUS_BG[activeOrder.status]} border-b border-[#E4DBC9]`}
+        >
+          <div className="mx-auto max-w-5xl px-4 py-2.5 sm:px-6">
+            <DigitalMenuOrderStatus
+              orderNumber={activeOrder.orderNumber}
+              status={activeOrder.status}
+            />
+          </div>
+        </div>
+      )}
+
       {/* ================= CATEGORY NAVIGATION ================= */}
 
-      <div className="sticky top-0 z-20 border-b border-[#ddd5ca] bg-[#f7f3ed]/95 backdrop-blur">
-
+      <div className="sticky top-0 z-20 border-b border-[#E4DBC9] bg-[#FAF6EF]/95 backdrop-blur">
         <div className="mx-auto max-w-5xl overflow-x-auto px-4 sm:px-5">
-
-          <div className="flex min-w-max gap-5 py-3 sm:gap-6 sm:py-4">
-
-            {Object.keys(groupedMenu).map(
-              (categoryName) => (
-                <a
-                  key={categoryName}
-                  href={`#${categoryName
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")}`}
-                  className="shrink-0 text-xs font-medium text-[#5f5750] transition hover:text-[#211e1b] sm:text-sm"
-                >
-                  {categoryName}
-                </a>
-              ),
-            )}
-
+          <div className="flex min-w-max gap-2 py-2.5 sm:gap-2.5 sm:py-3">
+            {Object.keys(groupedMenu).map((categoryName) => (
+              <a
+                key={categoryName}
+                href={`#${categoryName.toLowerCase().replace(/\s+/g, "-")}`}
+                className="shrink-0 rounded-full border border-[#E4DBC9] bg-white px-3.5 py-1.5 text-[13px] font-medium text-[#5f5750] transition active:scale-95 active:bg-[#1C1917] active:text-white sm:text-sm"
+              >
+                {categoryName}
+              </a>
+            ))}
           </div>
-
         </div>
-
       </div>
 
       {/* ================= MENU ================= */}
 
-      <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14 md:py-16">
+      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-14 md:py-16">
+        <div className="space-y-10 sm:space-y-16">
+          {Object.entries(groupedMenu).map(([categoryName, items]) => (
+            <section
+              key={categoryName}
+              id={categoryName.toLowerCase().replace(/\s+/g, "-")}
+              className="scroll-mt-16 sm:scroll-mt-20"
+            >
+              {/* Category heading */}
 
-        {/* Menu Heading */}
+              <div className="mb-4 flex items-baseline justify-between gap-3 sm:mb-6">
+                <h3 className="break-words font-serif text-xl tracking-tight text-[#1C1917] sm:text-3xl">
+                  {categoryName}
+                </h3>
 
-        <div className="mb-10 text-center sm:mb-14">
+                <span className="shrink-0 text-xs text-[#9a8e82] sm:text-sm">
+                  {items.length} {items.length === 1 ? "item" : "items"}
+                </span>
+              </div>
 
-          <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-[#8b8178] sm:text-xs sm:tracking-[0.35em]">
-            Discover
-          </p>
+              {/* Items */}
 
-          <h2 className="mt-2 text-3xl font-semibold tracking-tight text-[#211e1b] sm:mt-3 sm:text-4xl md:text-5xl">
-            Our Menu
-          </h2>
+              <div className="md:grid md:grid-cols-2 md:gap-x-10">
+                {items.map((item) => {
+                  const isOutOfStock = item.inventory.quantity <= 0;
+                  const cartItem = cart.find((c) => c.menu === item._id);
 
-          <div className="mx-auto mt-4 h-px w-12 bg-[#b8aa9b] sm:mt-5 sm:w-16" />
+                  return (
+                    <article
+                      key={item._id}
+                      className={`flex min-w-0 gap-3 rounded-2xl border border-[#E4DBC9] bg-white p-4 shadow-sm transition-shadow hover:shadow-md md:mb-5 ${
+                        isOutOfStock ? "opacity-50" : ""
+                      }`}
+                    >
+                      {/* Image */}
 
-          {/* ================= ACTIVE ORDER ================= */}
+                      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-[#F1EAD9] sm:h-24 sm:w-24">
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            loading="lazy"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center px-2 text-center text-[10px] text-[#9a8e82]">
+                            No image
+                          </div>
+                        )}
+                      </div>
 
-          {activeOrder && (
-            <div className="mt-6">
-              <DigitalMenuOrderStatus
-                orderNumber={activeOrder.orderNumber}
-                status={activeOrder.status}
-              />
-            </div>
-          )}
+                      {/* Content */}
 
-        </div>
-
-        {/* ================= CATEGORIES ================= */}
-
-        <div className="space-y-14 sm:space-y-20">
-
-          {Object.entries(groupedMenu).map(
-            ([categoryName, items]) => (
-
-              <section
-                key={categoryName}
-                id={categoryName
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")}
-                className="scroll-mt-20 sm:scroll-mt-24"
-              >
-
-                {/* Category heading */}
-
-                <div className="mb-6 flex items-end justify-between gap-3 border-b border-[#d8d0c6] pb-3 sm:mb-8 sm:pb-4">
-
-                  <div className="min-w-0">
-
-                    <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.2em] text-[#9a8e82] sm:mb-2 sm:text-xs sm:tracking-[0.25em]">
-                      Menu
-                    </p>
-
-                    <h3 className="break-words text-2xl font-semibold tracking-tight text-[#211e1b] sm:text-3xl">
-                      {categoryName}
-                    </h3>
-
-                  </div>
-
-                  <span className="shrink-0 text-xs text-[#9a8e82] sm:text-sm">
-                    {items.length}{" "}
-                    {items.length === 1
-                      ? "item"
-                      : "items"}
-                  </span>
-
-                </div>
-
-                {/* Items */}
-
-                <div className="grid gap-x-6 gap-y-6 sm:gap-x-8 sm:gap-y-8 md:grid-cols-2 md:gap-x-10">
-
-                  {items.map((item) => {
-
-                    const isOutOfStock =
-                      item.inventory.quantity <= 0;
-
-                    return (
-
-                      <article
-                        key={item._id}
-                        className={`group flex min-w-0 gap-3 border-b border-[#ded7ce] pb-6 sm:gap-4 sm:pb-8 ${
-                          isOutOfStock
-                            ? "opacity-60"
-                            : ""
-                        }`}
-                      >
-
-                        {/* Image */}
-
-                        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-[#e8e0d6] sm:h-28 sm:w-28 sm:rounded-xl md:h-32 md:w-32">
-
-                          {item.image ? (
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              loading="lazy"
-                              className="h-full w-full object-cover transition duration-500 group-hover:scale-110"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center px-2 text-center text-[10px] text-[#9a8e82] sm:text-xs">
-                              No image
-                            </div>
-                          )}
-
-                        </div>
-
-                        {/* Content */}
-
-                        <div className="flex min-w-0 flex-1 flex-col justify-between">
-
-                          <div>
-
-                            {/* Name + Price */}
-
-                            <div className="flex min-w-0 items-start justify-between gap-2 sm:gap-4">
-
-                              <h4 className="min-w-0 break-words text-base font-semibold leading-snug text-[#211e1b] sm:text-lg">
-                                {item.name}
-                              </h4>
-
-                              <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-[#211e1b] sm:text-lg">
-                                {settings.currency}
-                                {item.sellingPrice.toFixed(
-                                  2,
-                                )}
+                      <div className="flex min-w-0 flex-1 flex-col">
+                        <div className="flex min-w-0 items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              {/* Veg / Non-Veg marker */}
+                              <span
+                                className={`flex h-3 w-3 shrink-0 items-center justify-center border ${
+                                  item.type === "Veg"
+                                    ? "border-[#35513F]"
+                                    : "border-[#9B4630]"
+                                }`}
+                              >
+                                <span
+                                  className={`h-1.5 w-1.5 rounded-full ${
+                                    item.type === "Veg"
+                                      ? "bg-[#35513F]"
+                                      : "bg-[#9B4630]"
+                                  }`}
+                                />
                               </span>
 
+                              <h4 className="min-w-0 truncate font-serif text-[15px] leading-snug text-[#1C1917] sm:text-lg">
+                                {item.name}
+                              </h4>
                             </div>
 
-                            {/* Description */}
-
                             {item.description && (
-                              <p className="mt-1 text-xs leading-5 text-[#8b8178] sm:text-sm">
+                              <p className="mt-1 line-clamp-2 text-[12.5px] leading-5 text-[#8b8178] sm:text-sm">
                                 {item.description}
                               </p>
                             )}
-
-                            {/* Type */}
-
-                            <div className="mt-2 sm:mt-3">
-
-                              <span
-                                className={`inline-flex items-center gap-1.5 text-[10px] font-medium sm:text-xs ${
-                                  item.type === "Veg"
-                                    ? "text-green-700"
-                                    : "text-red-700"
-                                }`}
-                              >
-
-                                <span
-                                  className={`h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2 ${
-                                    item.type === "Veg"
-                                      ? "bg-green-600"
-                                      : "bg-red-600"
-                                  }`}
-                                />
-
-                                {item.type}
-
-                              </span>
-
-                            </div>
-
-                            {/* Out of Stock */}
-
-                            {isOutOfStock && (
-                              <span className="mt-2 inline-flex w-fit rounded-full bg-red-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-red-700 sm:text-xs">
-                                Out of Stock
-                              </span>
-                            )}
-
-                            {/* Add */}
-
-                            {!isOutOfStock && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  addToCart(item)
-                                }
-                                className="mt-3 w-fit rounded-full border border-[#211e1b] px-4 py-1.5 text-xs font-medium text-[#211e1b] transition hover:bg-[#211e1b] hover:text-white"
-                              >
-                                Add
-                              </button>
-                            )}
-
                           </div>
 
+                          <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-[#1C1917] sm:text-base">
+                            {settings.currency}
+                            {item.sellingPrice.toFixed(2)}
+                          </span>
                         </div>
 
-                      </article>
-
-                    );
-                  })}
-
-                </div>
-
-              </section>
-
-            ),
-          )}
-
+                        <div className="mt-2.5">
+                          {isOutOfStock ? (
+                            <span className="inline-flex w-fit rounded-full bg-red-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#9B4630]">
+                              Out of stock
+                            </span>
+                          ) : cartItem ? (
+                            <div className="inline-flex items-center gap-3 rounded-full border border-[#E4DBC9] bg-white px-1 py-1">
+                              <button
+                                type="button"
+                                onClick={() => decreaseQuantity(item._id)}
+                                className="flex h-6 w-6 items-center justify-center rounded-full text-[#1C1917] active:bg-[#F1EAD9]"
+                                aria-label={`Remove one ${item.name}`}
+                              >
+                                −
+                              </button>
+                              <span className="min-w-[1ch] text-sm font-medium text-[#1C1917]">
+                                {cartItem.quantity}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => increaseQuantity(item._id)}
+                                className="flex h-6 w-6 items-center justify-center rounded-full text-[#1C1917] active:bg-[#F1EAD9]"
+                                aria-label={`Add one more ${item.name}`}
+                              >
+                                +
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => addToCart(item)}
+                              className="rounded-full border border-[#1C1917] px-4 py-1.5 text-xs font-medium text-[#1C1917] transition active:bg-[#1C1917] active:text-white"
+                            >
+                              Add
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
-
       </main>
 
       {/* ================= CART ================= */}
 
       {cart.length > 0 && (
-        <div className="sticky bottom-0 z-30 border-t border-[#ddd5ca] bg-white/95 px-4 py-4 shadow-lg backdrop-blur">
-
-          <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
-
-            <div>
-
-              <p className="text-sm font-semibold text-[#211e1b]">
-                {cart.reduce(
-                  (total, item) =>
-                    total + item.quantity,
-                  0,
-                )}{" "}
-                {cart.length === 1
-                  ? "item"
-                  : "items"}
-              </p>
-
-              <p className="text-xs text-[#8b8178]">
-                ₹
-                {cart
-                  .reduce(
-                    (total, item) =>
-                      total +
-                      item.price * item.quantity,
-                    0,
-                  )
-                  .toFixed(2)}
-              </p>
-
-            </div>
-
+        <div className="sticky bottom-0 z-30 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-0">
+          <div className="mx-auto max-w-5xl">
             <button
               type="button"
               onClick={() => setShowCart(true)}
-              className="rounded-full bg-[#211e1b] px-5 py-2.5 text-xs font-medium text-white transition hover:bg-[#3a342f] sm:px-6 sm:text-sm"
+              className="flex w-full items-center justify-between gap-4 rounded-2xl bg-[#1C1917] px-5 py-3.5 text-white shadow-[0_8px_24px_rgba(28,25,23,0.35)]"
             >
-              View Cart
+              <span className="flex items-center gap-2 text-sm">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#B8924A] text-xs font-semibold text-[#1C1917]">
+                  {cartCount}
+                </span>
+                {cartCount === 1 ? "item" : "items"}
+              </span>
+
+              <span className="text-sm font-semibold">
+                {settings.currency}
+                {cartTotal.toFixed(2)}
+              </span>
+
+              <span className="text-sm font-medium text-[#B8924A]">
+                View cart →
+              </span>
             </button>
-
           </div>
-
         </div>
       )}
 
       {/* ================= FOOTER ================= */}
 
-      <footer className="border-t border-[#ddd5ca] bg-[#211e1b] px-4 py-10 text-center text-white sm:px-5 sm:py-12">
-
-        <div className="mx-auto max-w-3xl">
-
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-white/10 sm:h-14 sm:w-14">
-
-            {settings.logoUrl ? (
-              <img
-                src={settings.logoUrl}
-                alt={settings.restaurantName}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <span className="text-xs font-semibold sm:text-sm">
-                {(
-                  settings.initials ||
-                  settings.restaurantName.slice(0, 2)
-                )
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </span>
-            )}
-
-          </div>
-
-          <h3 className="text-lg font-semibold sm:text-xl">
-            {settings.restaurantName}
-          </h3>
-
-          <p className="mt-2 text-xs text-white/50 sm:text-sm">
-            {settings.restaurantAddress}
-          </p>
-
-          <p className="mt-1 text-xs text-white/50 sm:text-sm">
-            {settings.phone}
-          </p>
-
-          <p className="mt-6 text-[10px] uppercase tracking-[0.2em] text-white/30 sm:mt-8 sm:text-xs sm:tracking-[0.25em]">
-            Thank you for visiting
-          </p>
-
-        </div>
-
+      <footer className="border-t border-[#E4DBC9] bg-[#1C1917] px-5 py-8 text-center text-white/50 sm:py-10">
+        <p className="font-serif text-sm text-white/80">
+          {settings.restaurantName}
+        </p>
+        <p className="mt-1 text-xs">{settings.restaurantAddress}</p>
+        <p className="mt-0.5 text-xs">{settings.phone}</p>
       </footer>
 
       {/* ================= CART MODAL ================= */}
@@ -869,7 +765,6 @@ const DigitalMenu = () => {
           onPlaceOrder={placeQrOrder}
         />
       )}
-
     </div>
   );
 };
