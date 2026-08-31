@@ -1,11 +1,12 @@
 import { Server } from "socket.io";
+import { env } from "./config/env.js";
 
 let io: Server;
 
 export const initializeSocket = (server: any) => {
   io = new Server(server, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: env.FRONTEND_URL,
       credentials: true,
     },
   });
