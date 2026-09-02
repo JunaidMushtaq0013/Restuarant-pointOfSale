@@ -3,10 +3,16 @@ import crypto from "crypto";
 import { Order } from "../orders/orders.model.js";
 import { applyPaymentDiscount } from "../orders/orders.service.js";
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+const getRazorpay = () => {
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    throw new Error("Razorpay credentials are not configured.");
+  }
+
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
+};
 
 export const createRazorpayOrderService = async (
   orderId: string,
@@ -30,6 +36,11 @@ export const createRazorpayOrderService = async (
     applyPaymentDiscount(order, discountPercentage);
     await order.save();
   }
+
+
+
+  const razorpay = getRazorpay();
+
 
   const razorpayOrder = await razorpay.orders.create({
     amount: Math.round(order.grandTotal * 100),
@@ -65,6 +76,9 @@ export const verifyRazorpayPaymentService = async (
   }
 
   // 2. Fetch the Razorpay order
+
+  const razorpay = getRazorpay();
+
   const razorpayOrder = await razorpay.orders.fetch(razorpayOrderId);
 
   // 3. Get our POS order ID from Razorpay notes

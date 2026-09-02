@@ -34,6 +34,18 @@ export interface MenuItem {
   isActive: boolean;
 }
 
+interface RazorpayPaymentResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayPaymentFailedResponse {
+  error?: {
+    description?: string;
+  };
+}
+
 interface Table {
   _id: string;
   tableNumber: number;
@@ -333,8 +345,7 @@ const NewOrder = () => {
       setPlacingOrder(true);
 
       const payload = {
-    
-       source: "POS",
+        source: "POS",
 
         items: cart.map((item) => ({
           menu: item.menu._id,
@@ -885,7 +896,7 @@ const NewOrder = () => {
               description: `Payment for ${razorpayOrder.receipt}`,
               order_id: razorpayOrder.id,
 
-              handler: async function (response: any) {
+              handler: async function (response: RazorpayPaymentResponse) {
                 try {
                   console.log("Razorpay payment response:", response);
 
@@ -920,14 +931,17 @@ const NewOrder = () => {
 
             const razorpay = new window.Razorpay(options);
 
-            razorpay.on("payment.failed", (response: any) => {
-              console.error("Razorpay payment failed:", response);
+            razorpay.on(
+              "payment.failed",
+              (response: RazorpayPaymentFailedResponse) => {
+                console.error("Razorpay payment failed:", response);
 
-              toast.error(
-                response.error?.description ||
-                  "Payment failed. The order remains pending.",
-              );
-            });
+                toast.error(
+                  response.error?.description ||
+                    "Payment failed. The order remains pending.",
+                );
+              },
+            );
 
             razorpay.on("modal.closed", () => {
               toast.info("Payment cancelled. The order remains pending.");

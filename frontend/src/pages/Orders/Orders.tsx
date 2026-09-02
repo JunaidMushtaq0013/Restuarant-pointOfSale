@@ -6,6 +6,7 @@ import ViewOrderModal from "../../components/order/veiwOrderModal";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import ActionIcon from "../../components/common/ActionIcon";
 import { socket } from "../../socket";
+import type { AxiosError } from "axios";
 
 export interface Order {
   _id: string;
@@ -65,6 +66,22 @@ export interface InvoiceSettings {
   email: string;
   gstNumber: string;
   invoiceFooter: string;
+}
+
+interface RazorpayPaymentResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayPaymentFailedResponse {
+  error?: {
+    description?: string;
+  };
+}
+
+interface ApiErrorResponse {
+  message?: string;
 }
 
 type OrderStatus =
@@ -206,62 +223,58 @@ const Orders = () => {
     void loadOrders();
   }, [getOrders]);
 
-
-
   // =========================
-// Real-Time Order Updates
-// =========================
+  // Real-Time Order Updates
+  // =========================
 
-useEffect(() => {
-  const handleNewOrder = (newOrder: Order) => {
-    console.log("🍽️ New order received:", newOrder.orderNumber);
+  useEffect(() => {
+    const handleNewOrder = (newOrder: Order) => {
+      console.log("🍽️ New order received:", newOrder.orderNumber);
 
-    setOrders((currentOrders) => {
-      const alreadyExists = currentOrders.some(
-        (order) => order._id === newOrder._id,
+      setOrders((currentOrders) => {
+        const alreadyExists = currentOrders.some(
+          (order) => order._id === newOrder._id,
+        );
+
+        if (alreadyExists) {
+          return currentOrders;
+        }
+
+        return [newOrder, ...currentOrders];
+      });
+
+      setPagination((prev) => ({
+        ...prev,
+        totalItems: prev.totalItems + 1,
+      }));
+    };
+
+    const handleOrderStatusUpdated = (updatedOrder: Order) => {
+      console.log(
+        "🔄 Order status updated:",
+        updatedOrder.orderNumber,
+        updatedOrder.status,
       );
 
-      if (alreadyExists) {
-        return currentOrders;
-      }
+      setOrders((currentOrders) =>
+        currentOrders.map((order) =>
+          order._id === updatedOrder._id ? updatedOrder : order,
+        ),
+      );
 
-      return [newOrder, ...currentOrders];
-    });
+      setSelectedOrder((currentOrder) =>
+        currentOrder?._id === updatedOrder._id ? updatedOrder : currentOrder,
+      );
+    };
 
-    setPagination((prev) => ({
-      ...prev,
-      totalItems: prev.totalItems + 1,
-    }));
-  };
+    socket.on("newOrder", handleNewOrder);
+    socket.on("orderStatusUpdated", handleOrderStatusUpdated);
 
-  const handleOrderStatusUpdated = (updatedOrder: Order) => {
-    console.log(
-      "🔄 Order status updated:",
-      updatedOrder.orderNumber,
-      updatedOrder.status,
-    );
-
-    setOrders((currentOrders) =>
-      currentOrders.map((order) =>
-        order._id === updatedOrder._id ? updatedOrder : order,
-      ),
-    );
-
-    setSelectedOrder((currentOrder) =>
-      currentOrder?._id === updatedOrder._id
-        ? updatedOrder
-        : currentOrder,
-    );
-  };
-
-  socket.on("newOrder", handleNewOrder);
-  socket.on("orderStatusUpdated", handleOrderStatusUpdated);
-
-  return () => {
-    socket.off("newOrder", handleNewOrder);
-    socket.off("orderStatusUpdated", handleOrderStatusUpdated);
-  };
-}, []);
+    return () => {
+      socket.off("newOrder", handleNewOrder);
+      socket.off("orderStatusUpdated", handleOrderStatusUpdated);
+    };
+  }, []);
 
   // =========================
   // Search
@@ -440,7 +453,7 @@ useEffect(() => {
         description: `Payment for ${razorpayOrder.receipt}`,
         order_id: razorpayOrder.id,
 
-        handler: async function (response: any) {
+        handler: async function (response: RazorpayPaymentResponse) {
           try {
             console.log("Razorpay payment response:", response);
 
@@ -471,25 +484,31 @@ useEffect(() => {
 
       const razorpay = new window.Razorpay(options);
 
-      razorpay.on("payment.failed", (response: any) => {
-        console.error("Razorpay payment failed:", response);
+      razorpay.on(
+        "payment.failed",
+        (response: RazorpayPaymentFailedResponse) => {
+          console.error("Razorpay payment failed:", response);
 
-        toast.error(
-          response.error?.description ||
-            "Payment failed. The order remains pending.",
-        );
-      });
+          toast.error(
+            response.error?.description ||
+              "Payment failed. The order remains pending.",
+          );
+        },
+      );
 
       razorpay.on("modal.closed", () => {
         toast.info("Payment cancelled. The order remains pending.");
       });
 
       razorpay.open();
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Unable to initiate online payment.",
-      );
-    }
+    } catch (error) {
+  const axiosError = error as AxiosError<ApiErrorResponse>;
+
+  toast.error(
+    axiosError.response?.data?.message ||
+      "Unable to initiate online payment.",
+  );
+}
   };
   // =========================
   // Mark As Served
