@@ -1,197 +1,153 @@
-# Restuarant POS
+# 🍽️ Restaurant POS System
 
-Restuarant POS is a full-stack restaurant point-of-sale system for managing orders, billing, tables, menu items, inventory, customers, employees, and kitchen operations.
+A full-stack Restaurant Point of Sale (POS) system built to manage restaurant operations including orders, tables, menu items, inventory, customers, employees, kitchen workflow, invoices, payments, and restaurant settings.
 
-## Features
+The system provides role-based access for Managers, Cashiers, Waiters, and Chefs, allowing each role to access only the features relevant to their responsibilities.
 
-- Dashboard with restaurant activity and sales summaries
-- New Order workflow for dine-in and takeaway orders
-- Order tracking from pending through preparing, ready, served, or cancelled
-- Kitchen display for updating order progress
-- Restaurant table management with available, occupied, reserved, and inactive states
-- Menu and category management
-- Inventory and low-stock tracking
-- Customer records and order history
-- Employee and role-based access management
-- Restaurant settings, branding, billing, GST, and service-charge configuration
-- Cash and Razorpay online payments
-- Invoice printing from order details
-- Responsive layouts for desktop and mobile
-- Icon-based row actions across list and table views
+---
 
-## Technology Stack
+## 🚀 Features
 
-### Frontend
+### 📊 Dashboard
 
-- React 19
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Router
-- Axios
-- React Icons
-- Recharts
+- Restaurant overview
+- Order statistics
+- Sales overview
+- Operational information
+- Responsive dashboard design
 
-### Backend
+### 🛒 New Orders
 
-- Node.js
-- Express 5
-- TypeScript
-- MongoDB with Mongoose
-- JWT authentication
-- Zod validation
-- Razorpay payments
-- Cloudinary uploads
+- Create dine-in orders
+- Create takeaway orders
+- Select tables
+- Add menu items
+- Add item quantities
+- Add item notes
+- Customer information
+- Discount handling based on user role
+- Payment method selection
+- Payment status handling
 
-## Project Structure
+### 📋 Orders
+
+- View all orders
+- Pagination
+- Filter orders by status
+- Filter orders by date range
+- Display order date and time
+- View complete order details
+- Update order status
+- Update payment status
+- Cancel orders
+- Refund status handling
+
+### 🧾 Invoices
+
+- Dedicated invoice navigation tab
+- Today's invoices displayed by default
+- Date range filtering
+- Invoice date and time
+- Customer information
+- Subtotal
+- Discount
+- GST
+- Service charge
+- Grand total
+- Payment status
+- Order status
+- Export invoices to CSV
+- Download invoice as PDF
+
+### 👨‍🍳 Kitchen
+
+- View incoming orders
+- Track order preparation
+- Update kitchen order status
+- Role-based kitchen access
+
+### 🪑 Tables
+
+- Manage restaurant tables
+- View table status
+- Assign tables to orders
+- Support dine-in workflow
+
+### 🍴 Menu
+
+- Manage restaurant menu
+- Menu item information
+- Selling prices
+- Menu categories
+- Item types
+
+### 📦 Inventory
+
+- Manage inventory
+- Track stock
+- Inventory-related restaurant operations
+- Manager and Chef access
+
+### 👥 Customers
+
+- Manage customers
+- Customer name
+- Customer phone number
+- Customer order information
+
+### 👨‍💼 Employees
+
+- Manage restaurant employees
+- Role-based access
+- Manager-only employee management
+
+### ⚙️ Settings
+
+- Restaurant information
+- Restaurant name
+- Restaurant logo
+- Restaurant initials
+- Restaurant configuration
+
+### 📱 Digital / QR Menu
+
+- Public QR-based menu
+- Customers can access the menu without logging into the POS
+- QR orders are handled separately from authenticated POS orders
+
+---
+
+# 🔐 User Roles
+
+The system currently supports four roles:
+
+| Role | Access |
+|------|--------|
+| Manager | Full system access |
+| Cashier | Orders, payments, customers, tables, menu |
+| Waiter | Orders, tables, customers, menu |
+| Chef | Kitchen, inventory, orders, menu |
+
+Access is protected at both the frontend and backend levels.
+
+---
+
+# 🏗️ Project Architecture
+
+The application follows a full-stack architecture:
 
 ```text
-warisoft-POS/
-├── backend/       Express API and database services
-├── frontend/      React web application
-└── README.md
-```
-
-## Requirements
-
-- Node.js 24 or newer
-- npm
-- MongoDB database
-- Razorpay account for online payments
-- Cloudinary account for image uploads, if menu or branding uploads are used
-
-## Installation
-
-Install dependencies in both applications:
-
-```bash
-cd backend
-npm install
-
-cd ../frontend
-npm install
-```
-
-## Environment Variables
-
-Create `backend/.env`:
-
-```env
-PORT=5000
-MONGODB_URI=your mongodb url;
-JWT_SECRET=replace-with-a-long-random-secret
-JWT_EXPIRES_IN=1d
-FRONTEND_URL=http://localhost:5173
-
-RAZORPAY_KEY_ID=your-razorpay-key-id
-RAZORPAY_KEY_SECRET=your-razorpay-key-secret
-
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-cloudinary-api-key
-CLOUDINARY_API_SECRET=your-cloudinary-api-secret
-```
-
-Create `frontend/.env`:
-
-```env
-VITE_API_URL=http://localhost:5000/api
-VITE_RAZORPAY_KEY_ID=your-razorpay-key-id
-```
-
-Never commit real secrets to the repository.
-
-## Running Locally
-
-Start the backend in one terminal:
-
-```bash
-cd backend
-npm run dev
-```
-
-Start the frontend in another terminal:
-
-```bash
-cd frontend
-npm run dev
-```
-
-The frontend runs at `http://localhost:5173` and the API runs at `http://localhost:5000` by default.
-
-## User Roles
-
-| Role    | Main permissions                                                                                                                   |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Manager | Full operational access, employee/menu/category/inventory management, payments, discounts, and settings                            |
-| Cashier | Create orders, collect cash or online payments, and apply discounts up to 10%                                                      |
-| Waiter  | Create pending orders, manage assigned order/table workflow, and update service status; cannot collect payments or apply discounts |
-| Chef    | View kitchen orders and update preparation status                                                                                  |
-
-## Discounts and Payments
-
-- Managers and Cashiers can apply discounts in New Order.
-- Managers and Cashiers can apply or change discounts while collecting payment in Order Details.
-- The maximum discount is 10%.
-- The displayed total updates immediately when the discount changes.
-- Existing discounts are preserved when a pending order is paid later.
-- Discounts are recalculated from the original subtotal, so they are never applied twice.
-- Waiters cannot see payment controls and cannot create paid orders.
-- Backend authorization enforces the same rules as the frontend.
-- Razorpay payment creation and verification are restricted to Managers and Cashiers.
-
-## Available Scripts
-
-### Frontend
-
-```bash
-npm run dev       # Start Vite development server
-npm run build     # Type-check and create production build
-npm run lint      # Run ESLint
-npm run preview   # Preview the production build
-```
-
-### Backend
-
-```bash
-npm run dev         # Start API with watch mode
-npm run build       # Compile TypeScript
-npm run start       # Start compiled API
-npm run type-check  # Run TypeScript without emitting files
-npm test            # Run backend tests
-```
-
-## Validation
-
-The current implementation has been verified with:
-
-- Frontend production build
-- Backend TypeScript build
-- Backend test suite
-- Git diff whitespace validation
-
-
-
-## API Overview
-
-The backend API is mounted under `/api` and includes endpoints for:
-
-- `/auth`
-- `/categories`
-- `/customers`
-- `/dashboard`
-- `/employees`
-- `/inventory`
-- `/menu`
-- `/orders`
-- `/payments`
-- `/settings`
-- `/tables`
-
-Protected endpoints require the authenticated JWT token. Role permissions are enforced by backend authorization middleware.
-
-## Security Notes
-
-- Keep JWT and payment secrets server-side.
-- Use HTTPS in production.
-- Configure `FRONTEND_URL` to the deployed frontend origin.
-- Do not rely on frontend visibility checks alone; backend role middleware also validates protected actions.
+Frontend
+   │
+   │ HTTP / REST API
+   ▼
+Backend
+   │
+   ├── Controllers
+   ├── Services
+   ├── Routes
+   ├── Middleware
+   └── Models
+        │
+        ▼
+     MongoDB
