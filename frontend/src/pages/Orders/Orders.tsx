@@ -122,6 +122,9 @@ const Orders = () => {
 
   const [statusFilter, setStatusFilter] = useState<OrderStatus>("");
 
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
   // =========================
   // Pagination
   // =========================
@@ -176,6 +179,8 @@ const Orders = () => {
     async (
       page: number = 1,
       status: OrderStatus = "",
+      from: string = fromDate,
+      to: string = toDate,
       isTableUpdate = false,
     ) => {
       try {
@@ -190,6 +195,8 @@ const Orders = () => {
             page,
             limit: 10,
             status: status || undefined,
+            fromDate: from || undefined,
+            toDate: to || undefined,
           },
         });
 
@@ -208,7 +215,7 @@ const Orders = () => {
         }
       }
     },
-    [],
+    [fromDate, toDate],
   );
 
   // =========================
@@ -300,7 +307,7 @@ const Orders = () => {
 
     // Always start from page 1
     // when changing the filter.
-    getOrders(1, status, true);
+    getOrders(1, status, fromDate, toDate, true);
   };
 
   // =========================
@@ -312,7 +319,7 @@ const Orders = () => {
       return;
     }
 
-    getOrders(newPage, statusFilter, true);
+    getOrders(newPage, statusFilter, fromDate, toDate, true);
   };
 
   // =========================
@@ -502,13 +509,13 @@ const Orders = () => {
 
       razorpay.open();
     } catch (error) {
-  const axiosError = error as AxiosError<ApiErrorResponse>;
+      const axiosError = error as AxiosError<ApiErrorResponse>;
 
-  toast.error(
-    axiosError.response?.data?.message ||
-      "Unable to initiate online payment.",
-  );
-}
+      toast.error(
+        axiosError.response?.data?.message ||
+          "Unable to initiate online payment.",
+      );
+    }
   };
   // =========================
   // Mark As Served
@@ -644,6 +651,67 @@ const Orders = () => {
         </div>
       </div>
 
+
+
+
+      {/* =========================
+    DATE FILTER
+========================= */}
+
+<div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div>
+      <label className="mb-1 block text-sm font-medium text-gray-600">
+        From Date
+      </label>
+
+      <input
+        type="date"
+        value={fromDate}
+        onChange={(event) => setFromDate(event.target.value)}
+        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+      />
+    </div>
+
+    <div>
+      <label className="mb-1 block text-sm font-medium text-gray-600">
+        To Date
+      </label>
+
+      <input
+        type="date"
+        value={toDate}
+        onChange={(event) => setToDate(event.target.value)}
+        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none focus:border-gray-900 focus:ring-2 focus:ring-gray-200"
+      />
+    </div>
+
+    <div className="flex items-end">
+      <button
+        type="button"
+        onClick={() => getOrders(1, statusFilter, fromDate, toDate, true)}
+        className="w-full rounded-lg bg-gray-900 px-5 py-3 text-sm font-medium text-white hover:bg-gray-800"
+      >
+        Apply Date Filter
+      </button>
+    </div>
+
+    <div className="flex items-end">
+      <button
+        type="button"
+        onClick={() => {
+          setFromDate("");
+          setToDate("");
+          getOrders(1, statusFilter, "", "", true);
+        }}
+        className="w-full rounded-lg border border-gray-300 px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50"
+      >
+        Clear Dates
+      </button>
+    </div>
+  </div>
+</div>
+
       {/* =========================
           STATUS FILTER
       ========================= */}
@@ -678,127 +746,150 @@ const Orders = () => {
           DESKTOP TABLE
       ========================= */}
 
-      <div className="hidden overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm md:block">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 font-medium text-gray-600">Order #</th>
+    <div className="hidden overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm md:block">
+  <div className="overflow-x-auto">
+    <table className="w-full text-left text-xs">
+      <thead className="border-b bg-gray-50">
+        <tr>
+          <th className="px-4 py-3 font-medium text-gray-600">
+            Order #
+          </th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">
-                  Customer
-                </th>
+          <th className="px-4 py-3 font-medium text-gray-600">
+            Date & Time
+          </th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">Type</th>
+          <th className="px-4 py-3 font-medium text-gray-600">
+            Customer
+          </th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">Table</th>
+          <th className="px-4 py-3 font-medium text-gray-600">
+            Type
+          </th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">Status</th>
+          <th className="px-4 py-3 font-medium text-gray-600">
+            Table
+          </th>
 
-                <th className="px-6 py-4 font-medium text-gray-600">Payment</th>
+          <th className="px-4 py-3 font-medium text-gray-600">
+            Status
+          </th>
 
-                <th className="px-6 py-4 text-right font-medium text-gray-600">
-                  Actions
-                </th>
-              </tr>
-            </thead>
+          <th className="px-4 py-3 font-medium text-gray-600">
+            Payment
+          </th>
 
-            <tbody className="divide-y">
-              {filteredOrders.length > 0 ? (
-                filteredOrders.map((order) => (
-                  <tr key={order._id} className="hover:bg-gray-50">
-                    {/* Order Number */}
+          <th className="px-4 py-3 text-right font-medium text-gray-600">
+            Actions
+          </th>
+        </tr>
+      </thead>
 
-                    <td className="px-6 py-4 font-medium text-gray-900">
-                      {order.orderNumber}
-                    </td>
+      <tbody className="divide-y">
+        {filteredOrders.length > 0 ? (
+          filteredOrders.map((order) => (
+            <tr
+              key={order._id}
+              className="hover:bg-gray-50"
+            >
+              {/* Order Number */}
+              <td className="whitespace-nowrap px-4 py-3 font-medium text-gray-900">
+                {order.orderNumber}
+              </td>
 
-                    {/* Customer */}
+              {/* Order Date & Time */}
+              <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                <div>
+                  {new Date(order.createdAt).toLocaleDateString()}
+                </div>
 
-                    <td className="px-6 py-4 text-gray-700">
-                      <div className="max-w-[180px] truncate">
-                        {order.customer?.name ||
-                          order.customerName ||
-                          "Walk-in Customer"}
-                      </div>
+                <div className="mt-0.5 text-[11px] text-gray-400">
+                  {new Date(order.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+              </td>
 
-                      {order.customer?.phone && (
-                        <div className="mt-1 text-xs text-gray-400">
-                          {order.customer.phone}
-                        </div>
-                      )}
-                    </td>
+              {/* Customer */}
+              <td className="px-4 py-3 text-gray-700">
+                <div className="max-w-[140px] truncate">
+                  {order.customer?.name ||
+                    order.customerName ||
+                    "Walk-in Customer"}
+                </div>
 
-                    {/* Type */}
+                {order.customer?.phone && (
+                  <div className="mt-0.5 text-[11px] text-gray-400">
+                    {order.customer.phone}
+                  </div>
+                )}
+              </td>
 
-                    <td className="px-6 py-4 text-gray-600">
-                      {order.orderType}
-                    </td>
+              {/* Type */}
+              <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                {order.orderType}
+              </td>
 
-                    {/* Table */}
+              {/* Table */}
+              <td className="whitespace-nowrap px-4 py-3 text-gray-600">
+                {order.table?.tableNumber || "—"}
+              </td>
 
-                    <td className="px-6 py-4 text-gray-600">
-                      {order.table?.tableNumber || "—"}
-                    </td>
+              {/* Status */}
+              <td className="px-4 py-3">
+                <span
+                  className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium ${getStatusClass(
+                    order.status,
+                  )}`}
+                >
+                  {order.status}
+                </span>
+              </td>
 
-                    {/* Status */}
+              {/* Payment */}
+              <td className="px-4 py-3">
+                {order.paymentStatus === "Paid" ? (
+                  <span className="inline-flex whitespace-nowrap rounded-full bg-green-100 px-2.5 py-1 text-[11px] font-medium text-green-700">
+                    Paid
+                  </span>
+                ) : order.paymentStatus === "Refund Initiated" ? (
+                  <span className="inline-flex whitespace-nowrap rounded-full bg-red-100 px-2.5 py-1 text-[11px] font-medium text-red-700">
+                    Refund Initiated
+                  </span>
+                ) : (
+                  <span className="inline-flex whitespace-nowrap rounded-full bg-yellow-100 px-2.5 py-1 text-[11px] font-medium text-yellow-700">
+                    Pending
+                  </span>
+                )}
+              </td>
 
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
-                          order.status,
-                        )}`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-
-                    {/* Payment */}
-
-                    <td className="px-6 py-4">
-                      {order.paymentStatus === "Paid" ? (
-                        <span className="inline-flex rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-                          Paid
-                        </span>
-                      ) : order.paymentStatus === "Refund Initiated" ? (
-                        <span className="inline-flex rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
-                          Refund Initiated
-                        </span>
-                      ) : (
-                        <span className="inline-flex rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
-                          Pending
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Action */}
-
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        type="button"
-                        onClick={() => viewOrder(order._id)}
-                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                      >
-                        <ActionIcon label="View" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-10 text-center text-gray-500"
-                  >
-                    No orders found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+              {/* Action */}
+              <td className="px-4 py-3 text-right">
+                <button
+                  type="button"
+                  onClick={() => viewOrder(order._id)}
+                  className="rounded-md border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  <ActionIcon label="View" />
+                </button>
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td
+              colSpan={8}
+              className="px-4 py-8 text-center text-gray-500"
+            >
+              No orders found.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
       {/* =========================
           MOBILE CARDS
       ========================= */}

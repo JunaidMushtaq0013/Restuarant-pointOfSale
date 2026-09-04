@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import {
   cancelOrderService,
   createOrderService,
+  generateInvoicePdfService,
   getAllOrdersService,
   getOrderByIdService,
   getQrOrderByTokenService,
@@ -82,7 +83,19 @@ export const getAllOrdersController = async (
     const status =
       typeof req.query.status === "string" ? req.query.status : undefined;
 
-    const result = await getAllOrdersService(page, limit, status);
+    const fromDate =
+      typeof req.query.fromDate === "string" ? req.query.fromDate : undefined;
+
+    const toDate =
+      typeof req.query.toDate === "string" ? req.query.toDate : undefined;
+
+    const result = await getAllOrdersService(
+      page,
+      limit,
+      status,
+      fromDate,
+      toDate,
+    );
 
     res.status(200).json({
       status: "success",
@@ -169,4 +182,25 @@ export const cancelOrderController = async (
     message: "Order cancelled successfully",
     data: order,
   });
+};
+
+export const downloadInvoicePdfController = async (
+  req: Request<{ id: string }>,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const doc = await generateInvoicePdfService(req.params.id);
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="invoice-${req.params.id}.pdf"`,
+    );
+
+    doc.pipe(res);
+    doc.end();
+  } catch (error) {
+    next(error);
+  }
 };

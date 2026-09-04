@@ -12,6 +12,8 @@ import crypto from "crypto";
 
 import { getIO } from "../../socket.js";
 
+import PDFDocument from "pdfkit";
+
 export const createOrderService = async (payload: CreateOrderPayload) => {
   const session = await mongoose.startSession();
 
@@ -299,6 +301,8 @@ export const getAllOrdersService = async (
   page = 1,
   limit = 10,
   status?: string,
+  fromDate?: string,
+  toDate?: string,
 ) => {
   const skip = (page - 1) * limit;
 
@@ -307,6 +311,19 @@ export const getAllOrdersService = async (
   if (status) {
     filter.status = status;
   }
+
+
+  if (fromDate || toDate) {
+  filter.createdAt = {};
+
+  if (fromDate) {
+    filter.createdAt.$gte = new Date(`${fromDate}T00:00:00`);
+  }
+
+  if (toDate) {
+    filter.createdAt.$lte = new Date(`${toDate}T23:59:59.999`);
+  }
+}
 
   const [orders, totalOrders] = await Promise.all([
     Order.find(filter)
@@ -580,4 +597,227 @@ export const cancelOrderService = async (id: string) => {
   } finally {
     session.endSession();
   }
+};
+
+
+
+
+export const generateInvoicePdfService = async (
+  orderId: string,
+): Promise<PDFKit.PDFDocument> => {
+  const order = await Order.findById(orderId)
+    .populate("customer", "name phone")
+    .populate("items.menu", "name sellingPrice type");
+
+  if (!order) {
+    throw new Error("Order not found.");
+  }
+
+  const settings = await Settings.findOne();
+
+  if (!settings) {
+    throw new Error("Restaurant settings not found.");
+  }
+
+  const doc = new PDFDocument({
+    size: "A4",
+    margin: 50,
+  });
+
+  // -------------------------
+  // Restaurant Header
+  // -------------------------
+
+  doc
+    .fontSize(20)
+    .font("Helvetica-Bold")
+    .text(settings.restaurantName || "Warisoft POS", {
+      align: "center",
+    });
+
+  doc.moveDown(0.5);
+
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .text("INVOICE", {
+      align: "center",
+    });
+
+  doc.moveDown();
+
+  // -------------------------
+  // Invoice Information
+  // -------------------------
+
+  doc
+    .fontSize(10)
+    .font("Helvetica")
+    .text(`Invoice #: ${order.orderNumber}`);
+
+  doc.text(
+    `Date: ${new Date(order.createdAt).toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+    })}`,
+  );
+
+  const customer = order.customer as
+    | { name?: string; phone?: string }
+    | null;
+
+  doc.text(
+    `Customer: ${
+      customer?.name ||
+      order.customerName ||
+      "Walk-in Customer"
+    }`,
+  );
+
+  if (customer?.phone) {
+    doc.text(`Phone: ${customer.phone}`);
+  }
+
+  doc.moveDown();
+
+  // -------------------------
+  // Items Header
+  // -------------------------
+
+  const tableTop = doc.y;
+
+  doc.font("Helvetica-Bold");
+
+  doc.text("Item", 50, tableTop);
+  doc.text("Qty", 300, tableTop);
+  doc.text("Price", 350, tableTop);
+  doc.text("Total", 440, tableTop);
+
+  doc
+    .moveTo(50, tableTop + 18)
+    .lineTo(545, tableTop + 18)
+    .stroke();
+
+  // -------------------------
+  // Items
+  // -------------------------
+
+  let currentY = tableTop + 28;
+
+  doc.font("Helvetica");
+
+  for (const item of order.items) {
+    doc.text(item.name, 50, currentY, {
+      width: 230,
+    });
+
+    doc.text(String(item.quantity), 300, currentY);
+
+    doc.text(
+      `Rs ${item.price.toFixed(2)}`,
+      350,
+      currentY,
+    );
+
+    doc.text(
+      `Rs ${item.total.toFixed(2)}`,
+      440,
+      currentY,
+    );
+
+    currentY += 22;
+  }
+
+  doc
+    .moveTo(50, currentY)
+    .lineTo(545, currentY)
+    .stroke();
+
+  currentY += 15;
+
+  // -------------------------
+  // Totals
+  // -------------------------
+
+  const writeTotal = (
+    label: string,
+    value: number,
+    bold = false,
+  ) => {
+    doc
+      .font(bold ? "Helvetica-Bold" : "Helvetica")
+      .text(label, 350, currentY);
+
+    doc
+      .font(bold ? "Helvetica-Bold" : "Helvetica")
+      .text(
+        `Rs ${value.toFixed(2)}`,
+        445,
+        currentY,
+      );
+
+    currentY += 20;
+  };
+
+  writeTotal("Subtotal", order.subTotal);
+
+  if (order.discountAmount > 0) {
+    writeTotal(
+      "Discount",
+      order.discountAmount,
+    );
+  }
+
+  writeTotal(
+    `GST (${order.gstPercentage}%)`,
+    order.gstAmount,
+  );
+
+  if (order.serviceChargeAmount > 0) {
+    writeTotal(
+      `Service Charge(${order.serviceChargePercentage}%)`,
+       order.serviceChargeAmount,
+    );
+  }
+
+  doc
+    .moveTo(350, currentY)
+    .lineTo(545, currentY)
+    .stroke();
+
+  currentY += 10;
+
+  writeTotal(
+    "GRAND TOTAL",
+    order.grandTotal,
+    true,
+  );
+
+  // -------------------------
+  // Payment Status
+  // -------------------------
+
+  currentY += 10;
+
+  doc
+    .font("Helvetica-Bold")
+    .text(
+      `Payment Status: ${order.paymentStatus}`,
+      50,
+      currentY,
+    );
+
+  // -------------------------
+  // Footer
+  // -------------------------
+
+  doc.moveDown(3);
+
+  doc
+    .font("Helvetica")
+    .fontSize(10)
+    .text("Thank you for visiting!", {
+      align: "center",
+    });
+
+  return doc;
 };

@@ -15,6 +15,7 @@ import Settings from "../pages/Settings/Settings";
 import Orders from "../pages/Orders/Orders";
 import NewOrder from "../pages/neworder/NewOrder";
 import DigitalMenu from "../pages/DigitalMenu/DigitalMenu";
+import Invoices from "../pages/Invoices/Invoices";
 
 const AppRoutes = () => {
   return (
@@ -90,7 +91,13 @@ const AppRoutes = () => {
               <Route path="/orders" element={<Orders />} />
             </Route>
 
-              <Route
+            <Route
+              element={<ProtectedRoute allowedRoles={["Manager", "Cashier"]} />}
+            >
+              <Route path="/invoices" element={<Invoices />} />
+            </Route>
+
+            <Route
               element={
                 <ProtectedRoute
                   allowedRoles={["Manager", "Cashier", "Waiter", "Chef"]}

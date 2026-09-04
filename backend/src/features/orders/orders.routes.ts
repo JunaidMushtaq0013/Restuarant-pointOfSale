@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   cancelOrderController,
   createOrderController,
+  downloadInvoicePdfController,
   getAllOrdersController,
   getOrderByIdController,
 
@@ -39,6 +40,13 @@ router.get(
   authenticate,
   authorize("Manager", "Cashier", "Waiter", "Chef"),
   getAllOrdersController,
+);
+
+router.get(
+  "/:id/invoice/pdf",
+  authenticate,
+  authorize("Manager", "Cashier", "Waiter", "Chef"),
+  downloadInvoicePdfController,
 );
 
 router.get(

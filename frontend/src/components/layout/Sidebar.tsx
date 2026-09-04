@@ -8,6 +8,7 @@ import {
   MdBadge,
   MdCategory,
   MdDashboard,
+  MdDescription,
   MdInventory2,
   MdKitchen,
   MdPeople,
@@ -107,6 +108,7 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
       icon: MdAddShoppingCart,
       roles: ["Manager", "Cashier", "Waiter"],
     },
+
     {
       name: "Orders",
       path: "/orders",
@@ -118,6 +120,12 @@ const Sidebar = ({ onNavigate }: SidebarProps) => {
       path: "/kitchen",
       icon: MdKitchen,
       roles: ["Manager", "Chef"],
+    },
+    {
+      name: "Invoices",
+      path: "/invoices",
+      icon: MdDescription,
+      roles: ["Manager", "Cashier"],
     },
     {
       name: "Tables",

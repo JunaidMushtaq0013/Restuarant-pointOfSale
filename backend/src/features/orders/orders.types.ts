@@ -45,6 +45,9 @@ export interface OrderType {
   status: "Pending" | "Preparing" | "Ready" | "Served" | "Cancelled";
 
   isActive: boolean;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateOrderPayload {
